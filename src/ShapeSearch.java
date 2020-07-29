@@ -1,87 +1,104 @@
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 
 public class ShapeSearch {
-    public static void main(String[] args) {
 
-        // Variable to hold which list of shapes to use
-        int opt = 1;
+    //filename: must be of the form "___.csv"
+    //columnNumber: which column of the CSV is to be read
+    //limit: number of shapes to be read in
 
-        try{
-            // Read in the arguemnt for which option of list to use
-            //TODO
+    //returns a 1D array of shapes, of length [limit]
+    static Shape[] readCSV(String fileName, int columnNumber, boolean limitToTen) {
+        Shape[] shapes = null;
 
-            // Adjust opt to point to the correct column
-            opt = (opt - 1) * 4;
+        int column = (columnNumber - 1) * 4;
 
-            // Parse CSV file into BufferedReader
-            BufferedReader br = new BufferedReader(new FileReader("GivenLists.csv"));
+        // Parse CSV file into BufferedReader
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(fileName));
 
-            // Read in the header of the CSV file
+            // Process header
             String line = br.readLine();
             String[] cells = line.split(",");
-            String name = cells[opt + 2];
+
+            //extract name from header
+            String name = cells[column + 2];
 
             line = br.readLine();
             cells = line.split(",");
-            int size = Integer.parseInt(cells[opt + 2]);
 
-            // For testing limit size to 10
-            size = 10;
+            //extract size from header
+            int size = Integer.parseInt(cells[column + 2]);
 
             line = br.readLine();
             cells = line.split(",");
-            int itemArea = Integer.parseInt(cells[opt + 2]);
+            int itemArea = Integer.parseInt(cells[column + 2]);
 
             // Skip the next two lines
             br.readLine();
             br.readLine();
 
-            // Declare an array of Shape objects to be used
-            Shape[] shapes = new Shape[size];
+            //if boolean is toggled, limit number of inputs
+            if (limitToTen) {
+                size = 10;
+            }
 
-            // Read each shape
-            for(int i = 0; i < size; i++){
+            shapes = new Shape[size];
+
+            // Process each shape
+            for (int i = 0; i < size; i++) {
                 // Convert each line of the CSV file into a shape object
                 line = br.readLine();
                 cells = line.split(",");
-                int width = Integer.parseInt(cells[opt + 1]);
-                int height = Integer.parseInt(cells[opt + 2]);
+                int width = Integer.parseInt(cells[column + 1]);
+                int height = Integer.parseInt(cells[column + 2]);
+
                 // Put the larger value into width to help with sorting the initial order
-                if (width < height){
+                if (width < height) {
                     shapes[i] = (new Shape(height, width));
-                }
-                else {
+                } else {
                     shapes[i] = (new Shape(width, height));
                 }
             }
-
-
-
-            System.out.println("All shapes in order recorded shapes:");
-            // Print out the first ten shapes
-            for (int i = 0; i < size; i++){
-                System.out.println(shapes[i].toString());
-            }
-
-            // Sort the array of shapes from largest area first to smallest area last
-            Arrays.sort(shapes, Collections.reverseOrder());
-
-
-            System.out.println("All shapes in order of largest area shapes:");
-            // Print out the top ten shapes
-            for (int i = 0; i < size; i++){
-                System.out.println(shapes[i].toString());
-            }
-
+            //after reading all the shapes, we are done with using the bufferedreader
             br.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
+        return shapes;
+    }
+
+    public static void main(String[] args) {
+
+        int columnNumber = 1;
+        String fileName = "GivenLists.csv";
+
+        Shape[] shapes = readCSV(fileName, columnNumber, true); //set to limit input to 10 shapes maximum
+        int size = shapes.length;
+
+        System.out.println("All shapes in order recorded shapes:");
+        // Print out the first ten shapes
+        for (int i = 0; i < size; i++) {
+            System.out.println(shapes[i].toString());
         }
-        catch(Exception e){
-            System.out.println("Error: " + e.toString());
+
+        // Sort the array of shapes from largest area first to smallest area last
+        Arrays.sort(shapes, Collections.reverseOrder());
+
+
+        System.out.println("All shapes in order of largest area shapes:");
+        // Print out the top ten shapes
+        for (int i = 0; i < size; i++) {
+            System.out.println(shapes[i].toString());
         }
+
+
     }
 }
