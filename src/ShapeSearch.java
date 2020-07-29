@@ -77,6 +77,9 @@ public class ShapeSearch {
 
     public static void main(String[] args) {
 
+        //start timing program
+        final long initialTime = System.nanoTime();
+
         int columnNumber = 1;
         String filePath = "ShapeLists/GivenLists.csv";
 
@@ -99,6 +102,10 @@ public class ShapeSearch {
             System.out.println(shapes[i].toString());
         }
 
-
+        //finish timing program
+        //please do not move or change this time measurement statement
+        long finalTime = System.nanoTime();
+        //Please do not remove or change the format of this output message
+        System.out.println("Processed " + size + " shapes in " + (finalTime - initialTime) / 1E9 + " secs.");
     }
 }
