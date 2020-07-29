@@ -46,7 +46,7 @@ public class Shape implements Comparable<Shape>
     public String toString() {
         return "Shape{" +
                 "width=" + width +
-                ", height='" + height +
+                ", height=" + height +
                 '}';
     }
 }

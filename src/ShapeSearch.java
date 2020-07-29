@@ -7,19 +7,19 @@ import java.util.Collections;
 
 public class ShapeSearch {
 
-    //filename: must be of the form "___.csv"
+    //filePath: must be of the form "___.csv"
     //columnNumber: which column of the CSV is to be read
-    //limit: number of shapes to be read in
+    //limitToTen: boolean that controls whether input is limited for debug purposes
 
     //returns a 1D array of shapes, of length [limit]
-    static Shape[] readCSV(String fileName, int columnNumber, boolean limitToTen) {
+    static Shape[] readCSV(String filePath, int columnNumber, boolean limitToTen) {
         Shape[] shapes = null;
 
         int column = (columnNumber - 1) * 4;
 
         // Parse CSV file into BufferedReader
         try {
-            BufferedReader br = new BufferedReader(new FileReader(fileName));
+            BufferedReader br = new BufferedReader(new FileReader(filePath));
 
             // Process header
             String line = br.readLine();
@@ -78,9 +78,9 @@ public class ShapeSearch {
     public static void main(String[] args) {
 
         int columnNumber = 1;
-        String fileName = "GivenLists.csv";
+        String filePath = "ShapeLists/GivenLists.csv";
 
-        Shape[] shapes = readCSV(fileName, columnNumber, true); //set to limit input to 10 shapes maximum
+        Shape[] shapes = readCSV(filePath, columnNumber, true); //set to limit input to 10 shapes maximum
         int size = shapes.length;
 
         System.out.println("All shapes in order recorded shapes:");
