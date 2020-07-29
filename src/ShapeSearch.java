@@ -1,6 +1,8 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
 
 public class ShapeSearch {
     public static void main(String[] args) {
@@ -27,6 +29,9 @@ public class ShapeSearch {
             cells = line.split(",");
             int size = Integer.parseInt(cells[opt + 2]);
 
+            // For testing limit size to 10
+            size = 10;
+
             line = br.readLine();
             cells = line.split(",");
             int itemArea = Integer.parseInt(cells[opt + 2]);
@@ -45,11 +50,30 @@ public class ShapeSearch {
                 cells = line.split(",");
                 int width = Integer.parseInt(cells[opt + 1]);
                 int height = Integer.parseInt(cells[opt + 2]);
-                shapes[i] = (new Shape(width, height));
+                // Put the larger value into width to help with sorting the initial order
+                if (width < height){
+                    shapes[i] = (new Shape(height, width));
+                }
+                else {
+                    shapes[i] = (new Shape(width, height));
+                }
             }
 
+
+
+            System.out.println("All shapes in order recorded shapes:");
+            // Print out the first ten shapes
+            for (int i = 0; i < size; i++){
+                System.out.println(shapes[i].toString());
+            }
+
+            // Sort the array of shapes from largest area first to smallest area last
+            Arrays.sort(shapes, Collections.reverseOrder());
+
+
+            System.out.println("All shapes in order of largest area shapes:");
             // Print out the top ten shapes
-            for (int i = 0; i < 10; i++){
+            for (int i = 0; i < size; i++){
                 System.out.println(shapes[i].toString());
             }
 

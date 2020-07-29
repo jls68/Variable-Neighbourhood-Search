@@ -11,3 +11,5 @@
 - Implement means of measuring time taken to complete program -M 
 
 - Implement naive method - both
+
+- The width of the sheet will be 400 units
