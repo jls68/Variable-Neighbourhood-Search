@@ -1,6 +1,5 @@
-import org.w3c.dom.UserDataHandler;
-
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -16,56 +15,55 @@ public class ShapeSearch extends Canvas {
     // Array of shapes is global to allow main and paint method access
     static ArrayList<DrawingDimensions> toBeDrawn;
 
-    public static void main(String[] args) {
+    //filePath: must be of the form "___.csv"
+    //columnNumber: which column of the CSV is to be read
+    //limitToTen: boolean that controls whether input is limited for debug purposes
 
-        // Variable to hold which list of shapes to use
-        int opt = 1;
+    //returns a 1D array of shapes, of length [limit]
+    static Shape[] readCSV(String filePath, int columnNumber, boolean limitToTen) {
+        Shape[] shapes = null;
 
+        int column = (columnNumber - 1) * 4;
+
+        // Parse CSV file into BufferedReader
         try {
-            //########### Start reading the shapes from the file ###########
+            BufferedReader br = new BufferedReader(new FileReader(filePath));
 
-            // Read in the arguemnt for which option of list to use
-            if(args.length == 1){
-                opt = Integer.parseInt(args[0]);
-            }
-
-            // Adjust opt to point to the correct column
-            opt = (opt - 1) * 4;
-
-            // Parse CSV file into BufferedReader
-            BufferedReader br = new BufferedReader(new FileReader("GivenLists.csv"));
-
-            // Read in the header of the CSV file
+            // Process header
             String line = br.readLine();
             String[] cells = line.split(",");
-            String name = cells[opt + 2];
+
+            //extract name from header
+            String name = cells[column + 2];
 
             line = br.readLine();
             cells = line.split(",");
-            int size = Integer.parseInt(cells[opt + 2]);
+
+            //extract size from header
+            int size = Integer.parseInt(cells[column + 2]);
 
             line = br.readLine();
             cells = line.split(",");
-            int itemArea = Integer.parseInt(cells[opt + 2]);
+            int itemArea = Integer.parseInt(cells[column + 2]);
 
             // Skip the next two lines
             br.readLine();
             br.readLine();
 
-            // Declare an array of Shape objects to be used
-            Shape[] shapes = new Shape[size];
+            //if boolean is toggled, limit number of inputs
+            if (limitToTen) {
+                size = 10;
+            }
 
-            // Read each shape
+            shapes = new Shape[size];
+
+            // Process each shape
             for (int i = 0; i < size; i++) {
                 // Convert each line of the CSV file into a shape object
                 line = br.readLine();
                 cells = line.split(",");
-                int width = Integer.parseInt(cells[opt + 1]);
-                int height = Integer.parseInt(cells[opt + 2]);
-
-                // Increase both width and height by 10 to help with testing
-                //width *= 10;
-                //height *= 10;
+                int width = Integer.parseInt(cells[column + 1]);
+                int height = Integer.parseInt(cells[column + 2]);
 
                 // Put the larger value into width to help with sorting the initial order
                 if (width < height) {
@@ -74,57 +72,70 @@ public class ShapeSearch extends Canvas {
                     shapes[i] = (new Shape(width, height));
                 }
             }
-
+            //after reading all the shapes, we are done with using the bufferedreader
             br.close();
-            //########### End of reading the shapes from the file ###########
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-            //########### Start to sort the shapes ###########
+        return shapes;
+    }
 
-            System.out.println("All shapes in order recorded shapes:");
-            // Print out the first ten shapes
-            for (int i = 0; i < size; i++) {
-                System.out.println(shapes[i].toString());
-            }
+    public static void main(String[] args) {
 
-            // Sort the array of shapes from largest area first to smallest area last
-            Arrays.sort(shapes, Collections.reverseOrder());
+        int columnNumber = 1;
+        String filePath = "ShapeLists/GivenLists.csv";
 
+        Shape[] shapes = readCSV(filePath, columnNumber, true); //set to limit input to 10 shapes maximum
+        int size = shapes.length;
 
-            System.out.println("All shapes in order of largest area shapes:");
-            // Print out the top ten shapes
-            for (int i = 0; i < size; i++) {
-                System.out.println(shapes[i].toString());
-            }
+        System.out.println("All shapes in order recorded shapes:");
+        // Print out the first ten shapes
+        for (int i = 0; i < size; i++) {
+            System.out.println(shapes[i].toString());
+        }
 
-            //########### Start of the graphical display ###########
-            int boxWidth = 400;
-            int boxHeight = 1200;
-
-            int x = 0;
-            // Record the y values along the top of all added shapes
-            int[] yBottomLine = new int[boxWidth];
-
-            boolean reverse = false;
-
-            toBeDrawn = new ArrayList<DrawingDimensions>();
-
-            JFrame frame = new JFrame("ShapeSearch Graphic");
-            Canvas canvas = new ShapeSearch();
-            canvas.setSize(boxWidth, boxHeight);
-            frame.add(canvas);
-            frame.pack();
-            frame.setVisible(true);
-
-            // Create a list of indexes of the shapes to add so we can remove shapes from this list as they get added
-            ArrayList<Integer> toAdd = new ArrayList<Integer>();
-            for (int i = 0; i < shapes.length; i++) {
-                toAdd.add(i);
-            }
-
-            // Keep track of how many times we search all available shapes before we add one
-            int passes = 0;
+        // Sort the array of shapes from largest area first to smallest area last
+        Arrays.sort(shapes, Collections.reverseOrder());
 
 
+        System.out.println("All shapes in order of largest area shapes:");
+        // Print out the top ten shapes
+        for (int i = 0; i < size; i++) {
+            System.out.println(shapes[i].toString());
+        }
+
+        //########### Start of the graphical display ###########
+        int boxWidth = 400;
+        int boxHeight = 1200;
+
+        int x = 0;
+        // Record the y values along the top of all added shapes
+        int[] yBottomLine = new int[boxWidth];
+
+        boolean reverse = false;
+
+        toBeDrawn = new ArrayList<DrawingDimensions>();
+
+        JFrame frame = new JFrame("ShapeSearch Graphic");
+        Canvas canvas = new ShapeSearch();
+        canvas.setSize(boxWidth, boxHeight);
+        frame.add(canvas);
+        frame.pack();
+        frame.setVisible(true);
+
+        // Create a list of indexes of the shapes to add so we can remove shapes from this list as they get added
+        ArrayList<Integer> toAdd = new ArrayList<Integer>();
+        for (int i = 0; i < shapes.length; i++) {
+            toAdd.add(i);
+        }
+
+        // Keep track of how many times we search all available shapes before we add one
+        int passes = 0;
+
+        try {
             // Until all shapes are added
             while (1 < toAdd.size()) {
 
