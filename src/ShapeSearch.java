@@ -7,11 +7,13 @@ import java.util.Collections;
 
 public class ShapeSearch {
 
-    //filePath: must be of the form "___.csv"
-    //columnNumber: which column of the CSV is to be read
-    //limitToTen: boolean that controls whether input is limited for debug purposes
-
-    //returns a 1D array of shapes, of length [limit]
+    /**
+     * @param   filePath: must be of the form "___.csv"
+     *          columnNumber: which column of the CSV is to be read
+     *          limitToTen: boolean that controls whether input is limited for debug purposes
+     *
+     * @return  a 1D array of shapes, either limited to 10 or else the size of the CSV column
+     */
     static Shape[] readCSV(String filePath, int columnNumber, boolean limitToTen) {
         Shape[] shapes = null;
 
@@ -79,6 +81,7 @@ public class ShapeSearch {
 
         //start timing program
         final long initialTime = System.nanoTime();
+        //-----------------------------------------------------------------------------
 
         int columnNumber = 1;
         String filePath = "ShapeLists/GivenLists.csv";
@@ -102,8 +105,8 @@ public class ShapeSearch {
             System.out.println(shapes[i].toString());
         }
 
+        //-------------------------------------------------------------------------------------
         //finish timing program
-        //please do not move or change this time measurement statement
         long finalTime = System.nanoTime();
         //Please do not remove or change the format of this output message
         System.out.println("Processed " + size + " shapes in " + (finalTime - initialTime) / 1E9 + " secs.");
