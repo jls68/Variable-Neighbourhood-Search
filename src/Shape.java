@@ -1,8 +1,8 @@
 public class Shape implements Comparable<Shape>
 {
-    int width;
-    int height;
-    int area;
+    private int width;
+    private int height;
+    private int area;
 
     public Shape(int width, int height){
         this.width = width;

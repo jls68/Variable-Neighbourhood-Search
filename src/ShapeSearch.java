@@ -1,18 +1,33 @@
+import org.w3c.dom.UserDataHandler;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.awt.Canvas;
+import java.awt.Graphics;
+import java.util.concurrent.TimeUnit;
+import javax.swing.JFrame;
 
-public class ShapeSearch {
+public class ShapeSearch extends Canvas {
+
+    // Array of shapes is global to allow main and paint method access
+    static ArrayList<DrawingDimensions> toBeDrawn;
+
     public static void main(String[] args) {
 
         // Variable to hold which list of shapes to use
         int opt = 1;
 
-        try{
+        try {
+            //########### Start reading the shapes from the file ###########
+
             // Read in the arguemnt for which option of list to use
-            //TODO
+            if(args.length == 1){
+                opt = Integer.parseInt(args[0]);
+            }
 
             // Adjust opt to point to the correct column
             opt = (opt - 1) * 4;
@@ -29,9 +44,6 @@ public class ShapeSearch {
             cells = line.split(",");
             int size = Integer.parseInt(cells[opt + 2]);
 
-            // For testing limit size to 10
-            size = 10;
-
             line = br.readLine();
             cells = line.split(",");
             int itemArea = Integer.parseInt(cells[opt + 2]);
@@ -44,26 +56,33 @@ public class ShapeSearch {
             Shape[] shapes = new Shape[size];
 
             // Read each shape
-            for(int i = 0; i < size; i++){
+            for (int i = 0; i < size; i++) {
                 // Convert each line of the CSV file into a shape object
                 line = br.readLine();
                 cells = line.split(",");
                 int width = Integer.parseInt(cells[opt + 1]);
                 int height = Integer.parseInt(cells[opt + 2]);
+
+                // Increase both width and height by 10 to help with testing
+                //width *= 10;
+                //height *= 10;
+
                 // Put the larger value into width to help with sorting the initial order
-                if (width < height){
+                if (width < height) {
                     shapes[i] = (new Shape(height, width));
-                }
-                else {
+                } else {
                     shapes[i] = (new Shape(width, height));
                 }
             }
 
+            br.close();
+            //########### End of reading the shapes from the file ###########
 
+            //########### Start to sort the shapes ###########
 
             System.out.println("All shapes in order recorded shapes:");
             // Print out the first ten shapes
-            for (int i = 0; i < size; i++){
+            for (int i = 0; i < size; i++) {
                 System.out.println(shapes[i].toString());
             }
 
@@ -73,15 +92,191 @@ public class ShapeSearch {
 
             System.out.println("All shapes in order of largest area shapes:");
             // Print out the top ten shapes
-            for (int i = 0; i < size; i++){
+            for (int i = 0; i < size; i++) {
                 System.out.println(shapes[i].toString());
             }
 
-            br.close();
+            //########### Start of the graphical display ###########
+            int boxWidth = 400;
+            int boxHeight = 1200;
 
-        }
-        catch(Exception e){
+            int x = 0;
+            // Record the y values along the top of all added shapes
+            int[] yBottomLine = new int[boxWidth];
+
+            boolean reverse = false;
+
+            toBeDrawn = new ArrayList<DrawingDimensions>();
+
+            JFrame frame = new JFrame("ShapeSearch Graphic");
+            Canvas canvas = new ShapeSearch();
+            canvas.setSize(boxWidth, boxHeight);
+            frame.add(canvas);
+            frame.pack();
+            frame.setVisible(true);
+
+            // Create a list of indexes of the shapes to add so we can remove shapes from this list as they get added
+            ArrayList<Integer> toAdd = new ArrayList<Integer>();
+            for (int i = 0; i < shapes.length; i++) {
+                toAdd.add(i);
+            }
+
+            // Keep track of how many times we search all available shapes before we add one
+            int passes = 0;
+
+
+            // Until all shapes are added
+            while (1 < toAdd.size()) {
+
+                //If passes exceed 1 then move x across
+                if (1 < passes) {
+                    if (reverse) {
+                        if (x > 0) {
+                            int currY = yBottomLine[x];
+                            for (; x >= 0; x--) {
+                                if (yBottomLine[x] > currY) {
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (x <= 0) {
+                            x = 0;
+                            reverse = false;
+                        }
+                    } else {
+                        // If x is at end then reverse direction and set x to the edge
+                        if (x < boxWidth) {
+                            int currY = yBottomLine[x];
+                            for (; x < boxWidth; x++) {
+                                if (yBottomLine[x] > currY) {
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (x >= boxWidth) {
+                            x = boxWidth - 1;
+                            reverse = true;
+                        }
+                    }
+                }
+
+                // For each shape left to add
+                for (int i = 0; i < toAdd.size(); i++) {
+
+                    // Get the shape's dimensions
+                    int index = toAdd.get(i);
+                    int width = shapes[index].getWidth();
+                    int height = shapes[index].getHeight();
+
+                    // Calculate width to fit shape into
+                    int widthToFitIn = 0;
+                    if (reverse) {
+                        for (int j = x; j >= 0 && yBottomLine[j] <= yBottomLine[x]; j--) {
+                            widthToFitIn++;
+                        }
+                    } else {
+                        for (int j = x; j < boxWidth && yBottomLine[j] <= yBottomLine[x]; j++) {
+                            widthToFitIn++;
+                        }
+                    }
+
+                    // Rotate to fit
+                    boolean rotate = false;
+
+                    /*
+                    // If width does not fit but height does then rotate
+                    if (width > widthToFitIn && height <= widthToFitIn) {
+                        rotate = true;
+                        width = height;
+                        height = shapes[index].getWidth();
+                    }
+                    */
+
+                    // If the shape can fit
+                    if (width <= widthToFitIn) {
+
+
+                        if (reverse) {
+                            // Add the shape
+                            toBeDrawn.add(new DrawingDimensions(x - width, yBottomLine[x], index, shapes[index], rotate));
+
+                            passes = 0; // A shape has been added so reset passes counter
+
+                            int newY = yBottomLine[x] + height;
+                            // Adjust yBottomLine
+                            for (int whereShapePlaced = x; whereShapePlaced > x - width; whereShapePlaced--) {
+                                yBottomLine[whereShapePlaced] = newY;
+                            }
+
+                            // Adjust x
+                            x -= width;
+
+                            // Move x back to fill in gaps
+                            while (x < boxWidth - 2 && x >= 0) {
+                                if (yBottomLine[x] < yBottomLine[x + 1]) {
+                                    break;
+                                }
+                                x++;
+                            }
+
+                        } else {
+                            // Add the shape
+                            toBeDrawn.add(new DrawingDimensions(x, yBottomLine[x], index, shapes[index], rotate));
+
+                            passes = 0; // A shape has been added so reset passes counter
+
+                            int newY = yBottomLine[x] + height;
+
+                            // Extend height if needed
+                            if (newY > canvas.getHeight()) {
+                                canvas.setSize(boxWidth, newY);
+                            }
+
+                            // Adjust yBottomLine
+                            for (int whereShapePlaced = x; whereShapePlaced < x + width; whereShapePlaced++) {
+                                yBottomLine[whereShapePlaced] = newY;
+                            }
+
+                            // Adjust x
+                            x += width;
+
+                            // Move x back to fill in gaps
+                            while (x > 0 && x < boxWidth) {
+                                if (yBottomLine[x] < yBottomLine[x - 1]) {
+                                    break;
+                                }
+                                x--;
+                            }
+                        }
+
+                        // Remove shape from the list to add
+                        toAdd.remove(i);
+                        //i--;
+                        break;
+                    }
+                }
+
+                passes++;
+            }
+
+        } catch (Exception e) {
             System.out.println("Error: " + e.toString());
+        }
+    }
+
+    public void paint(Graphics g) {
+        try {
+            for (DrawingDimensions d : toBeDrawn
+            ) {
+                // Draw the shape
+                d.draw(g);
+                // Wait so we can see each shape being added
+                TimeUnit.MILLISECONDS.sleep(100);
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 }
