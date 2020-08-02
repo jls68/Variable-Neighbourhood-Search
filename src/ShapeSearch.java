@@ -108,7 +108,6 @@ public class ShapeSearch {
         //-------------------------------------------------------------------------------------
         //finish timing program
         long finalTime = System.nanoTime();
-        //Please do not remove or change the format of this output message
         System.out.println("Processed " + size + " shapes in " + (finalTime - initialTime) / 1E9 + " secs.");
     }
 }
