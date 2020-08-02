@@ -14,6 +14,7 @@ public class ShapeSearch extends Canvas {
 
     // Array of shapes is global to allow main and paint method access
     static ArrayList<DrawingDimensions> toBeDrawn;
+    static int boxWidth;
 
     /**
      * @param   filePath: must be of the form "___.csv"
@@ -37,6 +38,12 @@ public class ShapeSearch extends Canvas {
 
             //extract name from header
             String name = cells[column + 2];
+            if(name == "M1a"){
+                boxWidth = 40;
+            }
+            else{
+                boxWidth = 100;
+            }
 
             line = br.readLine();
             cells = line.split(",");
@@ -94,7 +101,7 @@ public class ShapeSearch extends Canvas {
         int columnNumber = 1;
         String filePath = "ShapeLists/GivenLists.csv";
 
-        Shape[] shapes = readCSV(filePath, columnNumber, true); //set to limit input to 10 shapes maximum
+        Shape[] shapes = readCSV(filePath, columnNumber, false); //set to limit input to 10 shapes maximum
         int size = shapes.length;
 
         System.out.println("All shapes in order recorded shapes:");
@@ -114,7 +121,6 @@ public class ShapeSearch extends Canvas {
         }
 
         //########### Start of the graphical display ###########
-        int boxWidth = 400;
         int boxHeight = 1200;
 
         int x = 0;
