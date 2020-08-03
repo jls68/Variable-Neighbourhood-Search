@@ -120,7 +120,7 @@ public class ShapeSearch extends Canvas {
             System.out.println(shapes[i].toString());
         }
 
-        //########### Start of the graphical display ###########
+        //########### Start of the shape fitting ###########
         int boxHeight = 1200;
 
         int x = 0;
