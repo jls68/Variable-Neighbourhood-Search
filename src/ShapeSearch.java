@@ -38,7 +38,7 @@ public class ShapeSearch extends Canvas {
 
             //extract name from header
             String name = cells[column + 2];
-            if(name == "M1a"){
+            if(name.equals("M1a")){
                 boxWidth = 40;
             }
             else{
@@ -100,6 +100,12 @@ public class ShapeSearch extends Canvas {
 
         int columnNumber = 1;
         String filePath = "ShapeLists/GivenLists.csv";
+
+        //Allow other shape lists to be selected
+        if(args.length == 2){
+            columnNumber = Integer.parseInt(args[0]);
+            filePath = "ShapeLists/" + args[1];
+        }
 
         Shape[] shapes = readCSV(filePath, columnNumber, false); //set to limit input to 10 shapes maximum
         int size = shapes.length;
