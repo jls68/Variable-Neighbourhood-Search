@@ -313,9 +313,9 @@ public class ShapeSearch extends Canvas {
      */
     public void paint(Graphics g) {
         try {
-            for (int i = 0; i < toBeDrawn.length; i++) {
+            for (DrawingDimensions d: toBeDrawn) {
                 // Draw the shape
-                toBeDrawn[i].draw(g, ENLARGEMENT);
+                d.draw(g, ENLARGEMENT);
                 // Wait so we can see each shape being added
                 TimeUnit.MILLISECONDS.sleep(100);
             }
