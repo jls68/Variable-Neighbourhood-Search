@@ -2,7 +2,8 @@
 
 
 ## To do
-- Create neighbourhood change function
+- Create neighbourhood change function - J
+- Create neighbourhoods -M
 - Create and test rotate function -M 
 - Plan of attack for checking collisions with other rectangles -J (partial)
 
