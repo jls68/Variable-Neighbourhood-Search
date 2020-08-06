@@ -75,8 +75,20 @@ public class ShapeSearch extends Canvas {
                 int width = Integer.parseInt(cells[column + 1]);
                 int height = Integer.parseInt(cells[column + 2]);
 
+                // Make sure the shapes has a width that can fit
+                if(width > boxWidth){
+                    // If height can't fit either then we can't use that shape
+                    if(height > boxWidth) {
+                        System.out.println("The shape " + i + " has a height and width greater than " + boxWidth);
+                        // We add an empty shape so we can still use the rest of the list
+                        shapes[i] = (new Shape(0, 0));
+                    }
+                    else{
+                        shapes[i] = (new Shape(height, width));
+                    }
+                }
                 // Put the larger value into width to help with sorting the initial order
-                if (width < height) {
+                else if (width < height) {
                     shapes[i] = (new Shape(height, width));
                 } else {
                     shapes[i] = (new Shape(width, height));
@@ -118,8 +130,8 @@ public class ShapeSearch extends Canvas {
     private static void printShapeOrder(Shape[] shapes, String Message){
         System.out.println(Message);
         // Print out the first ten shapes
-        for (int i = 0; i < shapes.length; i++) {
-            System.out.println(shapes[i].toString());
+        for (Shape s: shapes) {
+            System.out.println(s.toString());
         }
     }
 
@@ -127,13 +139,14 @@ public class ShapeSearch extends Canvas {
      * Fits shapes onto the sheet
      * @param toAdd index numbers of shapes to add
      * @param shapes the list of shapes
+     * @param zigzag alternates the direction shapes are placed
      * @param checkRotation if this is true then try both rotations to fit
      * @param checkForPerfect if this is true then look for a shape that matches the width to fit perfectly
      * @param moveXBack if this is true the next shape could be placed behind the last place shape if it is a perfect fit
      * @param findLowestUntil this is the limit of passes before the lowest y is no longer used first
      * @return the drawing dimensions of teh added shapes
      */
-    private static DrawingDimensions[] fitShape(List<Integer> toAdd, Shape[] shapes, boolean checkRotation, boolean checkForPerfect, boolean moveXBack, int findLowestUntil){
+    private static DrawingDimensions[] fitShape(List<Integer> toAdd, Shape[] shapes, boolean zigzag, boolean checkRotation, boolean checkForPerfect, boolean moveXBack, int findLowestUntil){
 
         int x = 0, toBeDrawnIndex = 0, passes = 0;
         yBottomLine = new int[boxWidth]; // Record the y values along the top of all added shapes
@@ -161,6 +174,11 @@ public class ShapeSearch extends Canvas {
                     // If we have tried to fit into the lowest value too many times then just attempt the next y level instead
                     if(findLowestUntil <= passes){
                         System.out.println("Attempting pass " + passes + " after reaching " + findLowestUntil + " with " + toAdd.size() + " shapes left to add.");
+                        if(passes > 100){
+                            //At this point the program has failed as it has tried every single possible value along the maximum x axis.
+                            System.out.println("The program has failed to fit " + toAdd.size() + " shapes");
+                            return toBeDrawn;
+                        }
                     }
                     else { // Else attempt to fit a shape in the lowest y level
                         int xNew = x;
@@ -182,8 +200,12 @@ public class ShapeSearch extends Canvas {
                     x = 0;
                     reverse = false;
                 } else if(x >= boxWidth) {
-                    x = boxWidth - 1;
-                    reverse = true;
+                    if(zigzag) {
+                        x = boxWidth - 1;
+                        reverse = true;
+                    } else {
+                        x = 0;
+                    }
                 }
             }
 
@@ -222,7 +244,7 @@ public class ShapeSearch extends Canvas {
                     // If checkForPerfect is true then search a first perfect width fit out of the remaining
                     if(checkForPerfect) {
                         int counter = 0;
-                        while (checkForPerfect && width != widthToFitIn && i + counter < toAdd.size()){
+                        while (width != widthToFitIn && i + counter < toAdd.size()){
                             // If the width of a later shape matches the widthToFitIn then have that as the current shape
                             if(shapes[toAdd.get(i + counter)].getWidth() == widthToFitIn){
                                 rotate = false;
@@ -331,7 +353,7 @@ public class ShapeSearch extends Canvas {
             if (args.length >= 3) {
                 // Check for matching options in the 3rd or later arguments
                 for (int i = 2; i < args.length; i++) {
-                    if (args[i] == "limit") {
+                    if (args[i].equals("limit")) {
                         limitToTen = true;
                     }
                 }
@@ -346,13 +368,35 @@ public class ShapeSearch extends Canvas {
         //printShapeOrder(shapes, "Initial Order");
 
         // Create a list of indexes of the shapes to add so we can remove shapes from this list as they get added
-        ArrayList<Integer> toAdd = new ArrayList<Integer>();
+        ArrayList<Integer> toAdd = new ArrayList<>();
         for (int i = 0; i < shapes.length; i++) {
             toAdd.add(i);
         }
 
-        // The shapes fitted to the sheet will be stored to global variable toBeDrawn
-        DrawingDimensions[] toBeDrawn = fitShape(toAdd, shapes, true, true, true, 5);
+        // The shapes fitted to the sheet will be stored to toBeDrawn
+        DrawingDimensions[] toBeDrawn = fitShape(toAdd, shapes, false, false, false, false, 0);
+        System.out.println("First fit gave a height of " + getLargestY());
+
+        int currentHeight = getLargestY();
+
+        // Second test
+
+        // Reset toAdd
+        toAdd.clear();
+        for (int i = 0; i < shapes.length; i++) {
+            toAdd.add(i);
+        }
+
+        // The shapes fitted to the sheet will be stored to toBeDrawn2
+        DrawingDimensions[] toBeDrawn2 = fitShape(toAdd, shapes, true, true, true, true, 5);
+        System.out.println("Second fit gave a height of " + getLargestY());
+
+        // If the new largest y value is less than the previous height
+        if(getLargestY() < currentHeight){
+            // Then make that the current best option
+            toBeDrawn = toBeDrawn2;
+            currentHeight = getLargestY();
+        }
 
         //-------------------------------------------------------------------------------------
         //finish timing program
@@ -361,9 +405,9 @@ public class ShapeSearch extends Canvas {
         System.out.println("Processed " + shapes.length + " shapes in " + (finalTime - initialTime) / 1E9 + " secs.");
 
         // Report how much space was used to fit all the shapes
-        System.out.println("Used space = " + getLargestY() * boxWidth);
+        System.out.println("Used space = " + currentHeight * boxWidth);
 
         // Set up the graphical display
-        new GraphicalDisplay(boxWidth, getLargestY(), toBeDrawn);
+        new GraphicalDisplay(boxWidth, currentHeight, toBeDrawn);
     }
 }
