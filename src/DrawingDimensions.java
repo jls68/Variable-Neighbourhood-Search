@@ -15,7 +15,7 @@ public class DrawingDimensions {
         this.rotate = rotate;
     }
 
-    public void draw(Graphics g) {
+    public void draw(Graphics g, int enl) {
         int h, w;
         if (rotate) {
             h = shape.getWidth();
@@ -24,11 +24,22 @@ public class DrawingDimensions {
             w = shape.getWidth();
             h = shape.getHeight();
         }
-        g.drawRect(x, y, w, h);
 
-        // Reduce the dimensions so there is empty space between each shape to help check for overlap
-        //g.drawRect(x - 1, y + 1,  w - 2, h - 2);
+        // Increased in size to make the shapes easier to see
+        int X = x * enl;
+        int Y = y * enl;
+        int W = w * enl;
+        int H = h * enl;
+
+        // Fill inner colour
+        g.setColor(Color.CYAN);
+        //g.fillRect(X, Y, W, H);
+
+        // Draw outline
+        g.setColor(Color.BLACK);
+        g.drawRect(X, Y, W, H);
+
         // Add the index number to the shape
-        //g.drawString(i, x, y + g.getFont().getSize());
+        g.drawString(i, X + 1, Y + g.getFont().getSize());
     }
 }
