@@ -333,6 +333,18 @@ public class ShapeSearch extends Canvas {
         return toBeDrawn;
     }
 
+
+    private static Solution NeighbourhoodChange(Solution xBest, Solution xNew, int k){
+        if(xNew.score < xBest.score){
+            xBest = xNew;
+            xBest.setK(1);
+        }
+        else{
+            xBest.setK(k + 1);
+        }
+        return xBest;
+    }
+
     public static void main(String[] args) {
 
         //start timing program
