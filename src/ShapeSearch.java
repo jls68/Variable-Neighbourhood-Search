@@ -127,7 +127,7 @@ public class ShapeSearch extends Canvas {
         }
 
         //########### Start of the shape fitting ###########
-        int boxHeight = 1200;
+        int boxHeight = 800;
 
         int x = 0;
         // Record the y values along the top of all added shapes
@@ -294,7 +294,7 @@ public class ShapeSearch extends Canvas {
             //finish timing program
             long finalTime = System.nanoTime();
             //Please do not remove or change the format of this output message
-            System.out.println("Processed " + size + " shapes in " + (finalTime - initialTime) / 1E9 + " secs.");
+            System.out.println("Processed " + size + " shapes in " + (finalTime - initialTime) / 1E9 + " secs. Used space = " + getUsedSpace(yBottomLine));
 
         } catch (Exception e) {
             System.out.println("Error: " + e.toString());
@@ -313,5 +313,17 @@ public class ShapeSearch extends Canvas {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    private static int getUsedSpace(int[] yBottomLine){
+        int yLargest = 0;
+        // Find the greatest value in yBottomLine
+        for (int y: yBottomLine) {
+            if(y > yLargest) {
+                yLargest = y;
+            }
+        }
+        // Calculate and return space used
+        return yLargest * boxWidth;
     }
 }
