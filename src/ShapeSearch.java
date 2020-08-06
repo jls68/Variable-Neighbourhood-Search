@@ -1,3 +1,4 @@
+import java.awt.*;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -5,20 +6,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.awt.Canvas;
-import java.awt.Graphics;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import javax.swing.JFrame;
+import javax.swing.*;
 
 public class ShapeSearch extends Canvas {
 
-    // Constant to increase the size of the display by
-    static int ENLARGEMENT = 2;
-
-    // Array of shapes is global to allow main and paint method access
-    static DrawingDimensions[] toBeDrawn;
     static int boxWidth;
+    static int[] yBottomLine;
 
     /**
      * Reads the shapes in from a csv file
@@ -101,11 +96,9 @@ public class ShapeSearch extends Canvas {
     /**
      * Find the largest y value which a shape touches.
      *
-     * @param yBottomLine an integer array that holds all the y values that make up the bottom line of the shape stack.
-     *
      * @return the greatest y value.
      */
-    private static int getLargestY(int[] yBottomLine){
+    private static int getLargestY(){
         int yLargest = 0;
         // Find the greatest value in yBottomLine
         for (int y: yBottomLine) {
@@ -115,19 +108,6 @@ public class ShapeSearch extends Canvas {
         }
         // Calculate and return space used
         return yLargest;
-    }
-
-    /**
-     * Calculates the area needed to fit all the shapes on.
-     *
-     * @param yBottomLine an integer array that holds all the y values that make up the bottom line of the shape stack.
-     *
-     * @return the greatest y value times the box width.
-     */
-    private static int getUsedSpace(int[] yBottomLine){
-        int yLargest = getLargestY(yBottomLine);
-        // Calculate and return space used
-        return yLargest * boxWidth;
     }
 
     /**
@@ -147,49 +127,58 @@ public class ShapeSearch extends Canvas {
      * Fits shapes onto the sheet
      * @param toAdd index numbers of shapes to add
      * @param shapes the list of shapes
-     * @return the y values of the end shapes
+     * @return the drawing dimensions of teh added shapes
      */
-    private static int[] fitShape(List<Integer> toAdd, Shape[] shapes){
+    private static DrawingDimensions[] fitShape(List<Integer> toAdd, Shape[] shapes){
 
         int x = 0, toBeDrawnIndex = 0, passes = 0;
-        int[] yBottomLine = new int[boxWidth]; // Record the y values along the top of all added shapes
-        toBeDrawn = new DrawingDimensions[shapes.length];
+        yBottomLine = new int[boxWidth]; // Record the y values along the top of all added shapes
+        DrawingDimensions[] toBeDrawn = new DrawingDimensions[shapes.length];
 
         boolean reverse = false;
         // Until all shapes are added
         while (0 < toAdd.size()) {
 
-            //If passes exceed 1 then move x across
+            //For testing
+            if(toAdd.size() == 3){
+                System.out.println("debug");
+            }
+
+            //If passes exceed 1 then move x to next lowest y value
             if (1 < passes) {
+                int direction = 1;
                 if (reverse) {
-                    if (x > 0) {
-                        int currY = yBottomLine[x];
-                        for (; x >= 0; x--) {
-                            if (yBottomLine[x] > currY) {
-                                break;
-                            }
-                        }
+                    direction = -1;
+                }
+
+                // If x is in the bounds then find next y level to add the shape to
+                if(x < boxWidth && x >= 0) {
+                    int yOld = yBottomLine[x];
+                    // Move across until on a new y level
+                    while (x < boxWidth && x >= 0 && yOld == yBottomLine[x]) {
+                        x += direction;
                     }
 
-                    if (x <= 0) {
-                        x = 0;
-                        reverse = false;
-                    }
-                } else {
-                    // If x is at end then reverse direction and set x to the edge
-                    if (x < boxWidth) {
-                        int currY = yBottomLine[x];
-                        for (; x < boxWidth; x++) {
-                            if (yBottomLine[x] > currY) {
-                                break;
-                            }
+                    int xNew = x;
+                    // Find x coordinate of the first lowest y value on the bottom line
+                    for (int i = x; i < boxWidth && i >= 0; i += direction) {
+                        // If the current y value at i is less than the y value at the new x coordinate
+                        if (yBottomLine[i] < yBottomLine[xNew]) {
+                            // Then make i the new x value
+                            xNew = i;
                         }
                     }
+                    x = xNew;
+                }
+                // Next if statement should still happen if the above if statement occurs as the x could move out of bounds
 
-                    if (x >= boxWidth) {
-                        x = boxWidth - 1;
-                        reverse = true;
-                    }
+                // If x is out of bounds then change direction and search the other way
+                if (reverse && x < 0) {
+                    x = 0;
+                    reverse = false;
+                } else if(x >= boxWidth) {
+                    x = boxWidth - 1;
+                    reverse = true;
                 }
             }
 
@@ -233,6 +222,7 @@ public class ShapeSearch extends Canvas {
                     // If reversed then we need to adjust x as we are looking at the right edge of where the shape will go
                     if (reverse) {
                         shapeX -= width;
+                        shapeX++; // Adjust for the fact that the left point is inclusive
                     }
 
                     // Add the shape
@@ -289,39 +279,7 @@ public class ShapeSearch extends Canvas {
 
             passes++;
         }
-        return yBottomLine;
-    }
-
-    /**
-     * Sets up the graphical display
-     *
-     * @param boxHeight height of the frame to be displayed in
-     */
-    private static void setUpGraphic(int boxHeight){
-        JFrame frame = new JFrame("ShapeSearch Graphic");
-        Canvas canvas = new ShapeSearch();
-        canvas.setSize(boxWidth * ENLARGEMENT, boxHeight * ENLARGEMENT); // Increased in size to make the shapes easier to see
-        frame.add(canvas);
-        frame.pack();
-        frame.setVisible(true);
-    }
-
-    /**
-     * Creates the graphical display of the shapes being fit to the sheet.
-     *
-     * @param g the graphical object that the shapes will be drawn onto.
-     */
-    public void paint(Graphics g) {
-        try {
-            for (DrawingDimensions d: toBeDrawn) {
-                // Draw the shape
-                d.draw(g, ENLARGEMENT);
-                // Wait so we can see each shape being added
-                TimeUnit.MILLISECONDS.sleep(100);
-            }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        return toBeDrawn;
     }
 
     public static void main(String[] args) {
@@ -358,8 +316,6 @@ public class ShapeSearch extends Canvas {
 
         //printShapeOrder(shapes, "Initial Order");
 
-
-
         // Create a list of indexes of the shapes to add so we can remove shapes from this list as they get added
         ArrayList<Integer> toAdd = new ArrayList<Integer>();
         for (int i = 0; i < shapes.length; i++) {
@@ -367,7 +323,7 @@ public class ShapeSearch extends Canvas {
         }
 
         // The shapes fitted to the sheet will be stored to global variable toBeDrawn
-        int[] yBottomLine = fitShape(toAdd, shapes);
+        DrawingDimensions[] toBeDrawn = fitShape(toAdd, shapes);
 
         //-------------------------------------------------------------------------------------
         //finish timing program
@@ -376,8 +332,9 @@ public class ShapeSearch extends Canvas {
         System.out.println("Processed " + shapes.length + " shapes in " + (finalTime - initialTime) / 1E9 + " secs.");
 
         // Report how much space was used to fit all the shapes
-        System.out.println("Used space = " + getUsedSpace(yBottomLine));
+        System.out.println("Used space = " + getLargestY() * boxWidth);
+
         // Set up the graphical display
-        setUpGraphic(getLargestY(yBottomLine) + 10);
+        new GraphicalDisplay(boxWidth, getLargestY(), toBeDrawn);
     }
 }
