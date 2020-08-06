@@ -173,7 +173,7 @@ public class ShapeSearch extends Canvas {
 
                     // If we have tried to fit into the lowest value too many times then just attempt the next y level instead
                     if(findLowestUntil <= passes){
-                        System.out.println("Attempting pass " + passes + " after reaching " + findLowestUntil + " with " + toAdd.size() + " shapes left to add.");
+                        //System.out.println("Attempting pass " + passes + " after reaching " + findLowestUntil + " with " + toAdd.size() + " shapes left to add.");
                         if(passes > 100){
                             //At this point the program has failed as it has tried every single possible value along the maximum x axis.
                             System.out.println("The program has failed to fit " + toAdd.size() + " shapes");
