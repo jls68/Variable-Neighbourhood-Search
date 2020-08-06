@@ -127,9 +127,13 @@ public class ShapeSearch extends Canvas {
      * Fits shapes onto the sheet
      * @param toAdd index numbers of shapes to add
      * @param shapes the list of shapes
+     * @param checkRotation if this is true then try both rotations to fit
+     * @param checkForPerfect if this is true then look for a shape that matches the width to fit perfectly
+     * @param moveXBack if this is true the next shape could be placed behind the last place shape if it is a perfect fit
+     * @param findLowestUntil this is the limit of passes before the lowest y is no longer used first
      * @return the drawing dimensions of teh added shapes
      */
-    private static DrawingDimensions[] fitShape(List<Integer> toAdd, Shape[] shapes){
+    private static DrawingDimensions[] fitShape(List<Integer> toAdd, Shape[] shapes, boolean checkRotation, boolean checkForPerfect, boolean moveXBack, int findLowestUntil){
 
         int x = 0, toBeDrawnIndex = 0, passes = 0;
         yBottomLine = new int[boxWidth]; // Record the y values along the top of all added shapes
@@ -138,11 +142,6 @@ public class ShapeSearch extends Canvas {
         boolean reverse = false;
         // Until all shapes are added
         while (0 < toAdd.size()) {
-
-            //For testing
-            if(toAdd.size() == 3){
-                System.out.println("debug");
-            }
 
             //If passes exceed 1 then move x to next lowest y value
             if (1 < passes) {
@@ -159,16 +158,22 @@ public class ShapeSearch extends Canvas {
                         x += direction;
                     }
 
-                    int xNew = x;
-                    // Find x coordinate of the first lowest y value on the bottom line
-                    for (int i = x; i < boxWidth && i >= 0; i += direction) {
-                        // If the current y value at i is less than the y value at the new x coordinate
-                        if (yBottomLine[i] < yBottomLine[xNew]) {
-                            // Then make i the new x value
-                            xNew = i;
-                        }
+                    // If we have tried to fit into the lowest value too many times then just attempt the next y level instead
+                    if(findLowestUntil <= passes){
+                        System.out.println("Attempting pass " + passes + " after reaching " + findLowestUntil + " with " + toAdd.size() + " shapes left to add.");
                     }
-                    x = xNew;
+                    else { // Else attempt to fit a shape in the lowest y level
+                        int xNew = x;
+                        // Find x coordinate of the first lowest y value on the bottom line
+                        for (int i = x; i < boxWidth && i >= 0; i += direction) {
+                            // If the current y value at i is less than the y value at the new x coordinate
+                            if (yBottomLine[i] < yBottomLine[xNew]) {
+                                // Then make i the new x value
+                                xNew = i;
+                            }
+                        }
+                        x = xNew;
+                    }
                 }
                 // Next if statement should still happen if the above if statement occurs as the x could move out of bounds
 
@@ -182,7 +187,7 @@ public class ShapeSearch extends Canvas {
                 }
             }
 
-            // For each shape left to add
+            // For each shape to still add
             for (int i = 0; i < toAdd.size(); i++) {
 
                 // Get the shape's dimensions
@@ -204,18 +209,38 @@ public class ShapeSearch extends Canvas {
 
                 // Rotate to fit
                 boolean rotate = false;
-
-                    /*
-                    // If width does not fit but height does then rotate
-                    if (width > widthToFitIn && height <= widthToFitIn) {
-                        rotate = true;
-                        width = height;
-                        height = shapes[index].getWidth();
-                    }
-                    */
+                // If checkRotation is true and width does not fit but height does then rotate
+                if (checkRotation && width > widthToFitIn && height <= widthToFitIn) {
+                    rotate = true;
+                    width = height;
+                    height = shapes[index].getWidth();
+                }
 
                 // If the shape can fit
                 if (width <= widthToFitIn) {
+
+                    // If checkForPerfect is true then search a first perfect width fit out of the remaining
+                    if(checkForPerfect) {
+                        int counter = 0;
+                        while (checkForPerfect && width != widthToFitIn && i + counter < toAdd.size()){
+                            // If the width of a later shape matches the widthToFitIn then have that as the current shape
+                            if(shapes[toAdd.get(i + counter)].getWidth() == widthToFitIn){
+                                rotate = false;
+                                i += counter;
+                                index = toAdd.get(i);
+                                width = shapes[index].getWidth();
+                                height = shapes[index].getHeight();
+                            } else if (checkRotation && shapes[toAdd.get(i + counter)].getHeight() == widthToFitIn) {
+                                rotate = true;
+                                i += counter;
+                                index = toAdd.get(i);
+                                width = shapes[index].getHeight();
+                                height = shapes[index].getWidth();
+                            }else {
+                                counter++;
+                            }
+                        }
+                    }
 
                     // Set the variable of the x value for the shape to be drawn from
                     int shapeX = x;
@@ -239,12 +264,14 @@ public class ShapeSearch extends Canvas {
                         // Adjust x
                         x -= width;
 
-                        // Move x back to fill in gaps
-                        while (x < boxWidth - 2 && x >= 0) {
-                            if (yBottomLine[x] < yBottomLine[x + 1]) {
-                                break;
+                        if(moveXBack) {
+                            // Move x back to fill in gaps
+                            while (x < boxWidth - 2 && x >= 0) {
+                                if (yBottomLine[x] < yBottomLine[x + 1]) {
+                                    break;
+                                }
+                                x++;
                             }
-                            x++;
                         }
 
                     } else {
@@ -257,12 +284,14 @@ public class ShapeSearch extends Canvas {
                         // Adjust x
                         x += width;
 
-                        // Move x back to fill in gaps
-                        while (x > 0 && x < boxWidth) {
-                            if (yBottomLine[x] < yBottomLine[x - 1]) {
-                                break;
+                        if(moveXBack) {
+                            // Move x back to fill in gaps
+                            while (x > 0 && x < boxWidth) {
+                                if (yBottomLine[x] < yBottomLine[x - 1]) {
+                                    break;
+                                }
+                                x--;
                             }
-                            x--;
                         }
                     }
 
@@ -272,7 +301,7 @@ public class ShapeSearch extends Canvas {
 
                     // Remove shape from the list to add
                     toAdd.remove(i);
-                    //i--;
+                    // Break out of the loop of searching through each shape
                     break;
                 }
             }
@@ -294,12 +323,12 @@ public class ShapeSearch extends Canvas {
         boolean limitToTen = false;
 
         // Allow other shape lists to be selected
-        if (args.length <= 2) {
+        if (args.length >= 2) {
             columnNumber = Integer.parseInt(args[0]);
-            filePath = "ShapeLists/" + args[1];
+            filePath = args[1];
 
             // Allow extra options to be selected
-            if (args.length <= 3) {
+            if (args.length >= 3) {
                 // Check for matching options in the 3rd or later arguments
                 for (int i = 2; i < args.length; i++) {
                     if (args[i] == "limit") {
@@ -323,7 +352,7 @@ public class ShapeSearch extends Canvas {
         }
 
         // The shapes fitted to the sheet will be stored to global variable toBeDrawn
-        DrawingDimensions[] toBeDrawn = fitShape(toAdd, shapes);
+        DrawingDimensions[] toBeDrawn = fitShape(toAdd, shapes, true, true, true, 5);
 
         //-------------------------------------------------------------------------------------
         //finish timing program

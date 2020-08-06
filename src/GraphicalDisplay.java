@@ -7,7 +7,7 @@ import java.util.concurrent.TimeUnit;
 public class GraphicalDisplay extends JFrame {
 
     // Constant to increase the size of the display by
-    int ENLARGEMENT = 2;
+    int ENLARGEMENT = 3;
     // Array of shapes is global to allow main and paint method access
     DrawingDimensions[] toBeDrawn;
 
