@@ -1,9 +1,11 @@
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 public class Solution {
 
+    Random rand = new Random();
     int[] yBottomLine; // Record the y values along the top of all added shapes
     DrawingDimensions[] toBeDrawn;
     Shape[] _shapesOrder;
@@ -17,7 +19,7 @@ public class Solution {
         _boxWidth = boxWidth;
 
         yBottomLine = new int[_boxWidth];
-        toBeDrawn = fitShape(_shapesOrder, _options[0], _options[1], _options[2], _options[3], _options[4]);
+        toBeDrawn = fitShape(_shapesOrder, _options[0], _options[1], _options[2], _options[3], _options[4], _options[5]);
 
         score = getLargestY();
     }
@@ -30,38 +32,49 @@ public class Solution {
         return toBeDrawn;
     }
 
-    public Solution getBestInNeighborhood(int k){
+    public Solution getBestInNeighborhood(int k, String type){
         // Create an array of neighborhood solutions
-        Solution[] neighborhood = new Solution[_shapesOrder.length];
+        Solution[] neighborhood;
 
-        // For each shape
-        for (int i = 0; i < _shapesOrder.length; i++) {
-            // Push shape at i, k positions up the queue
-            int newPosition = i - k;
-            // If the new position is less than 0
-            if(newPosition < 0) {
-                // Then add to end of queue
-                newPosition = _shapesOrder.length + newPosition;
+        // K neighbours have random shapes moved in order to add
+        if(type.equals("RandomMove")) {
+            int length = _shapesOrder.length / 2;
+            neighborhood = new Solution[length];
+            for (int i = 0; i < length; i++) {
+                // Move k shapes at random
+                Shape[] newOrder = moveKShapes(i, k);
+                // Add the new solution
+                neighborhood[i] = new Solution(newOrder, _options, _boxWidth);
             }
-            // Create the new shape array
-            Shape[] newOrder = new Shape[_shapesOrder.length];
-            int toAddIndex = 0;
-            for(int j = 0; j < _shapesOrder.length; j++){
-                // If we reach the shape to skip
-                if(j == i){
-                    toAddIndex++;
+        }
+        // K neighbours have random options for how to fit the shapes
+        else if (type.equals("Options")){
+            int length = _options.length;
+            neighborhood = new Solution[length];
+            for (int i = 0; i < length; i++) {
+                boolean[] newOptions = _options.clone();
+                // Change k many options
+                for(int j = 0; j < k; j++){
+                    int index = i + j;
+                    while(index >= _options.length){
+                        index -= _options.length;
+                    }
+                    newOptions[index] = !newOptions[index];
                 }
-
-                if(j == newPosition){
-                    newOrder[j] = _shapesOrder[i];
-                } else{
-                    newOrder[j] = _shapesOrder[toAddIndex];
-                    toAddIndex++;
-                }
+                // Add the new solution
+                neighborhood[i] = new Solution(_shapesOrder, newOptions, _boxWidth);
             }
-
-            // Add the new solution
-            neighborhood[i] = new Solution(newOrder, _options, _boxWidth);
+        }
+        // K neighbours are how much a shape moves in the queue
+        else {
+            int length = _shapesOrder.length;
+            neighborhood = new Solution[length];
+            for (int i = 0; i < length; i++) {
+                // Push shape at i, k positions up the queue
+                Shape[] newOrder = moveShapeByK(i, k, _shapesOrder);
+                // Add the new solution
+                neighborhood[i] = new Solution(newOrder, _options, _boxWidth);
+            }
         }
 
         // Find best neighbourhood solution
@@ -76,6 +89,53 @@ public class Solution {
     }
 
     /**
+     * Move a shape up the queue to be fitted by a certain amount
+     * @param i index of the shape to be moved
+     * @param k amount of positions to move up
+     * @return a new order of shapes
+     */
+    private Shape[] moveShapeByK(int i, int k, Shape[] shapesOrder){
+        int newPosition = i - k;
+        // If the new position is less than 0
+        if(newPosition < 0) {
+            // Then add to end of queue
+            newPosition = shapesOrder.length + newPosition;
+        }
+        // Create the new shape array
+        Shape[] newOrder = new Shape[shapesOrder.length];
+        int toAddIndex = 0;
+        for(int j = 0; j < shapesOrder.length; j++){
+            // If we reach the shape to skip
+            if(j == i){
+                toAddIndex++;
+            }
+
+            if(j == newPosition){
+                newOrder[j] = _shapesOrder[i];
+            } else{
+                newOrder[j] = _shapesOrder[toAddIndex];
+                toAddIndex++;
+            }
+        }
+        return newOrder;
+    }
+
+    /**
+     * Move an amount of shapes to random positions of the queue
+     * @param i index of first shape to move
+     * @param k amount of shapes to move
+     * @return a new order of shapes
+     */
+    private Shape[] moveKShapes(int i, int k){
+
+        Shape[] newOrder = moveShapeByK(i, rand.nextInt(_shapesOrder.length - 2) + 1, _shapesOrder);
+        for(int j = 0; j < k; j++){
+            newOrder = moveShapeByK(i, rand.nextInt(newOrder.length - 2) + 1, newOrder);
+        }
+        return newOrder;
+    }
+
+    /**
      * Fits shapes onto the sheet
      * @param shapesOrder the list of shapes in order to be fitted
      * @param zigzag alternates the direction shapes are placed
@@ -83,9 +143,10 @@ public class Solution {
      * @param checkForPerfect if this is true then look for a shape that matches the width to fit perfectly
      * @param moveXBack if this is true the next shape could be placed behind the last place shape if it is a perfect fit
      * @param findLowestUntil this is the limit of passes before the lowest y is no longer used first
+     * @param strictOrder says that each shape has to be added in order and that order can not be changed
      * @return the drawing dimensions of teh added shapes
      */
-    private DrawingDimensions[] fitShape(Shape[] shapesOrder, boolean zigzag, boolean checkRotation, boolean checkForPerfect, boolean moveXBack, boolean findLowestUntil){
+    private DrawingDimensions[] fitShape(Shape[] shapesOrder, boolean zigzag, boolean checkRotation, boolean checkForPerfect, boolean moveXBack, boolean findLowestUntil, boolean strictOrder){
 
         int x = 0, toBeDrawnIndex = 0, passes = 0;
         DrawingDimensions[] toBeDrawn = new DrawingDimensions[shapesOrder.length];
@@ -115,12 +176,7 @@ public class Solution {
                         x += direction;
                     }
 
-                    if (passes > 100) {
-                        //At this point the program has failed as it has tried every single possible value along the maximum x axis.
-                        System.out.println("The program has failed to fit " + toAdd.size() + " shapes");
-                        return toBeDrawn; //TODO make sure if this happens it does not become the best solution
-
-                    } else if(findLowestUntil && 4 < passes) { // Else if set then attempt to fit a shape in the lowest y level
+                    if(findLowestUntil && passes == 3) { // Else if set then attempt to fit a shape in the lowest y level
                         int xNew = x;
                         // Find x coordinate of the first lowest y value on the bottom line
                         for (int i = x; i < _boxWidth && i >= 0; i += direction) {
@@ -261,6 +317,45 @@ public class Solution {
                     // Remove shape from the list to add
                     toAdd.remove(i);
                     // Break out of the loop of searching through each shape
+                    break;
+                }
+                // Else if can't find a fit then do a local search for best placement
+                else if (passes > 8){
+                    int bestX = 0;
+                    int lowestMaxY = -1;
+                    for(int left = 0; left < _boxWidth - width; left++){
+                        int yMax = 0;
+                        for(int xValue = left; xValue < left + width; xValue++){
+                            if(yBottomLine[xValue] > yMax){
+                                yMax = yBottomLine[xValue];
+                            }
+                        }
+                        if(lowestMaxY == -1 || lowestMaxY > yMax){
+                            lowestMaxY = yMax;
+                            bestX = left;
+                        }
+                    }
+                    // Add the shape
+                    toBeDrawn[toBeDrawnIndex] = new DrawingDimensions(bestX, lowestMaxY, toAdd.get(i), rotate);
+                    toBeDrawnIndex++;
+                    // Adjust yBottomLine
+                    for (int whereShapePlaced = bestX; whereShapePlaced < bestX + width; whereShapePlaced++) {
+                        yBottomLine[whereShapePlaced] = lowestMaxY;
+                    }
+
+                    // Adjust x
+                    x = bestX + width;
+
+                    // A shape has been added so reset passes counter
+                    passes = 0;
+
+                    // Remove shape from the list to add
+                    toAdd.remove(i);
+                    // Break out of the loop of searching through each shape
+                    break;
+                }
+                // If strict order is true then if current shape does not fit then do not try to fit the next shape
+                else if(strictOrder){
                     break;
                 }
             }

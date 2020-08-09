@@ -17,7 +17,7 @@ public class GraphicalDisplay extends JFrame {
 
     // Declare variables for a timer to draw each shape separately
     private int count = 1;
-    private int timeSlice = 300;  // How many milliseconds in between each shape being drawn
+    private int timeSlice = 100;  // How many milliseconds in between each shape being drawn
     private Timer timer = new Timer(timeSlice, (e) -> update());
 
     // Constructor to set up the GUI components and event handlers

@@ -12,9 +12,10 @@ import javax.swing.*;
 
 public class ShapeSearch extends Canvas {
 
-    static final int OPTIONS = 5;
+    static final int OPTIONS = 6;
     static int boxWidth;
     static int k;
+    static String kType;
 
     /**
      * Reads the shapes in from a csv file
@@ -108,15 +109,24 @@ public class ShapeSearch extends Canvas {
 
     /**
      * Prints a message and then the shapes out in order.
-     * @param shapes the list of all shapes.
+     * @param x the solution to print details about.
      * @param Message to be displayed above the list of shapes.
      */
-    private static void printShapeOrder(Shape[] shapes, String Message){
+    private static void printSummary(Solution x, String Message){
         System.out.println(Message);
-        // Print out the first ten shapes
-        for (Shape s: shapes) {
-            System.out.println(s.toString());
+        // Print out the order of shapes
+        System.out.print("Shape order to add: ");
+        for (Shape s: x._shapesOrder) {
+            System.out.print(s.getId() + " ");
         }
+        System.out.println();
+        // Print out fitting option settings
+        System.out.print("Fitting option settings are: ");
+        for (Boolean opt: x._options) {
+            System.out.print(opt.toString() + " ");
+        }
+        System.out.println();
+        System.out.println("Used space = " + x.getScore() * boxWidth);
     }
 
     /**
@@ -128,9 +138,8 @@ public class ShapeSearch extends Canvas {
     private static Solution NeighbourhoodChange(Solution xBest, Solution xNew){
         if(xNew.score < xBest.score){
             xBest = xNew;
+            System.out.println("New fit at k=" + k + " with an area of " + xBest.getScore());
             k = 1;
-
-            System.out.println("New fit used an area of " + xBest.getScore());
         }
         else{
             k++;
@@ -143,7 +152,18 @@ public class ShapeSearch extends Canvas {
         k = 1;
         do{
             // Find the best neighbor in neighborhood k
-            Solution xNew = xBest.getBestInNeighborhood(k);
+            Solution xNew;
+            if(kType.equals("OptionsAndKMove")){
+                xNew = xBest.getBestInNeighborhood(k, "kMove");
+                xNew = xNew.getBestInNeighborhood(k, "Options");
+            }
+            else if(kType.equals("OptionsAndRandomMove")){
+                xNew = xBest.getBestInNeighborhood(k, "RandomMove");
+                xNew = xNew.getBestInNeighborhood(k, "Options");
+            }
+            else {
+                xNew = xBest.getBestInNeighborhood(k, kType);
+            }
             // Change neighborhood
             xBest = NeighbourhoodChange(xBest, xNew);
         } while (k < kMax);
@@ -160,6 +180,7 @@ public class ShapeSearch extends Canvas {
         int columnNumber = 1;
         String filePath = "ShapeLists/GivenLists.csv";
         boolean limitToTen = false;
+        kType = "";
 
         // Allow other shape lists to be selected
         if (args.length >= 2) {
@@ -172,6 +193,9 @@ public class ShapeSearch extends Canvas {
                 for (int i = 2; i < args.length; i++) {
                     if (args[i].equals("limit")) {
                         limitToTen = true;
+                    }
+                    else if(args[i].equals("RandomMove") || args[i].equals("Options") || args[i].equals("OptionsAndKMove") || args[i].equals("OptionsAndRandomMove") ){
+                        kType = args[i];
                     }
                 }
             }
@@ -186,6 +210,12 @@ public class ShapeSearch extends Canvas {
 
         // Initialise fitting options for the initial solution as all false
         boolean[] options = new boolean[OPTIONS];
+        // This seem to be the optimal settings
+        options[1] = true;
+        options[2] = true;
+        options[3] = true;
+        //options[4] = true; // This option doesn't seem to have much affect
+
         // Create initial solution with order to add shapes, the shapes, the options to fit, and the box width
         Solution xBest = new Solution(shapes, options, boxWidth);
         System.out.println("First fit used an area of " + xBest.getScore());
@@ -200,9 +230,11 @@ public class ShapeSearch extends Canvas {
         System.out.println("Processed " + shapes.length + " shapes in " + (finalTime - initialTime) / 1E9 + " secs.");
 
         // Report how much space was used to fit all the shapes
-        System.out.println("Used space = " + xBest.getScore() * boxWidth);
+
+
+        printSummary(xBest, filePath + " " + columnNumber + " " + kType);
 
         // Set up the graphical display
-        new GraphicalDisplay(boxWidth, xBest.getScore(), xBest.getDrawDimensions());
+        new GraphicalDisplay(boxWidth, xBest.getScore() + 5, xBest.getDrawDimensions());
     }
 }
