@@ -3,11 +3,17 @@ public class Shape implements Comparable<Shape>
     private int width;
     private int height;
     private int area;
+    private String id;
 
-    public Shape(int width, int height){
+    public Shape(String id, int width, int height){
+        this.id = id;
         this.width = width;
         this.height = height;
         area = width * height;
+    }
+
+    public String getId(){
+        return id;
     }
 
     public int getWidth() {
@@ -44,7 +50,7 @@ public class Shape implements Comparable<Shape>
 
     @Override
     public String toString() {
-        return "Shape{" +
+        return "Shape{id: " +
                 "width=" + width +
                 ", height=" + height +
                 '}';

@@ -3,14 +3,12 @@ import java.awt.*;
 public class DrawingDimensions {
     int x;
     int y;
-    String i;
     Shape shape;
     boolean rotate;
 
-    public DrawingDimensions(int X, int Y, int index, Shape shape, boolean rotate){
+    public DrawingDimensions(int X, int Y, Shape shape, boolean rotate){
         x = X;
         y = Y;
-        i = String.valueOf(index);
         this.shape = shape;
         this.rotate = rotate;
     }
@@ -40,6 +38,6 @@ public class DrawingDimensions {
         g.drawRect(X, Y, W, H);
 
         // Add the index number to the shape
-        g.drawString(i, X + 1, Y + g.getFont().getSize());
+        g.drawString(shape.getId(), X + 1, Y + g.getFont().getSize());
     }
 }

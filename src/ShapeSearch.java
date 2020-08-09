@@ -12,6 +12,7 @@ import javax.swing.*;
 
 public class ShapeSearch extends Canvas {
 
+    static final int OPTIONS = 5;
     static int boxWidth;
     static int k;
 
@@ -81,17 +82,17 @@ public class ShapeSearch extends Canvas {
                     if(height > boxWidth) {
                         System.out.println("The shape " + i + " has a height and width greater than " + boxWidth);
                         // We add an empty shape so we can still use the rest of the list
-                        shapes[i] = (new Shape(0, 0));
+                        shapes[i] = (new Shape("Missing", 0, 0));
                     }
                     else{
-                        shapes[i] = (new Shape(height, width));
+                        shapes[i] = (new Shape(cells[column], height, width));
                     }
                 }
                 // Put the larger value into width to help with sorting the initial order
                 else if (width < height) {
-                    shapes[i] = (new Shape(height, width));
+                    shapes[i] = (new Shape(cells[column], height, width));
                 } else {
-                    shapes[i] = (new Shape(width, height));
+                    shapes[i] = (new Shape(cells[column], width, height));
                 }
             }
             //after reading all the shapes, we are done with using the bufferedreader
@@ -128,10 +129,24 @@ public class ShapeSearch extends Canvas {
         if(xNew.score < xBest.score){
             xBest = xNew;
             k = 1;
+
+            System.out.println("New fit used an area of " + xBest.getScore());
         }
         else{
             k++;
         }
+        return xBest;
+    }
+
+
+    private static Solution VND(Solution xBest, int kMax){
+        k = 1;
+        do{
+            // Find the best neighbor in neighborhood k
+            Solution xNew = xBest.getBestInNeighborhood(k);
+            // Change neighborhood
+            xBest = NeighbourhoodChange(xBest, xNew);
+        } while (k < kMax);
         return xBest;
     }
 
@@ -169,18 +184,14 @@ public class ShapeSearch extends Canvas {
 
         //printShapeOrder(shapes, "Initial Order");
 
-        // Create a list of indexes of the shapes to add so we can remove shapes from this list as they get added
-        ArrayList<Integer> toAdd = new ArrayList<>();
-        for (int i = 0; i < shapes.length; i++) {
-            toAdd.add(i);
-        }
-
         // Initialise fitting options for the initial solution as all false
-        boolean[] options = new boolean[5];
+        boolean[] options = new boolean[OPTIONS];
         // Create initial solution with order to add shapes, the shapes, the options to fit, and the box width
-        Solution xBest = new Solution(toAdd, shapes, options, boxWidth);
+        Solution xBest = new Solution(shapes, options, boxWidth);
         System.out.println("First fit used an area of " + xBest.getScore());
 
+        // Variable Neighbourhood Descent
+        xBest = VND(xBest, shapes.length - 1);
 
         //-------------------------------------------------------------------------------------
         //finish timing program
