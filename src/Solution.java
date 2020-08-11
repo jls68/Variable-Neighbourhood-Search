@@ -36,19 +36,8 @@ public class Solution {
         // Create an array of neighborhood solutions
         Solution[] neighborhood;
 
-        // K neighbours have random shapes moved in order to add
-        if(type.equals("RandomMove")) {
-            int length = _shapesOrder.length / 2;
-            neighborhood = new Solution[length];
-            for (int i = 0; i < length; i++) {
-                // Move k shapes at random
-                Shape[] newOrder = moveKShapes(i, k);
-                // Add the new solution
-                neighborhood[i] = new Solution(newOrder, _options, _boxWidth);
-            }
-        }
-        // K neighbours have random options for how to fit the shapes
-        else if (type.equals("Options")){
+        // Used to search neighbours that have different fitting options
+        if (type.equals("Options")){
             int length = _options.length;
             neighborhood = new Solution[length];
             for (int i = 0; i < length; i++) {
@@ -65,13 +54,29 @@ public class Solution {
                 neighborhood[i] = new Solution(_shapesOrder, newOptions, _boxWidth);
             }
         }
-        // K neighbours are how much a shape moves in the queue
+
+        // Create neighbours of solution that have k difference
         else {
+            // Decrement k by one as we first try rotating each shape before moving them
+            k--;
+
             int length = _shapesOrder.length;
             neighborhood = new Solution[length];
             for (int i = 0; i < length; i++) {
-                // Push shape at i, k positions up the queue
-                Shape[] newOrder = moveShapeByK(i, k, _shapesOrder);
+                Shape[] newOrder;
+
+                if(k == 0){
+                    // Rotate shape at i
+                    newOrder = rotateShape(i, _shapesOrder);
+                }
+                else if (type.equals("RandomMove")) {
+                    // K shapes moved at random
+                    newOrder = moveKShapes(i, k);
+                }
+                else {
+                    // Push shape at i, k positions up the queue
+                    newOrder = moveShapeByK(i, k, _shapesOrder);
+                }
                 // Add the new solution
                 neighborhood[i] = new Solution(newOrder, _options, _boxWidth);
             }
@@ -133,6 +138,29 @@ public class Solution {
             newOrder = moveShapeByK(i, rand.nextInt(newOrder.length - 2) + 1, newOrder);
         }
         return newOrder;
+    }
+
+    /**
+     * Rotate the shape at index i if possible
+     * @param i index of the shape to rotate
+     * @return a new list of shapes
+     */
+    private Shape[] rotateShape(int i, Shape[] shapesOrder){
+
+        // Copy current shapes
+        Shape[] newShapes = shapesOrder.clone();
+
+        int newWidth = newShapes[i].getHeight();
+        // If the rotated shape would not fit on the sheet then do not rotate it
+        if(newWidth > _boxWidth){
+            return newShapes;
+        }
+
+        int newHeight = newShapes[i].getWidth();
+
+        // Create a copy of the old shape at i but with swapped dimensions
+        newShapes[i] = new Shape(newShapes[i].getId(), newWidth, newHeight);
+        return newShapes;
     }
 
     /**
@@ -364,7 +392,6 @@ public class Solution {
         }
         return toBeDrawn;
     }
-
 
     /**
      * Find the largest y value which a shape touches.

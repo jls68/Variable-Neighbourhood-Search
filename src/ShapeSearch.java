@@ -194,7 +194,10 @@ public class ShapeSearch extends Canvas {
                     if (args[i].equals("limit")) {
                         limitToTen = true;
                     }
-                    else if(args[i].equals("RandomMove") || args[i].equals("Options") || args[i].equals("OptionsAndKMove") || args[i].equals("OptionsAndRandomMove") ){
+                    else if(args[i].equals("RandomMove") ||
+                            args[i].equals("Options") ||
+                            args[i].equals("OptionsAndKMove") ||
+                            args[i].equals("OptionsAndRandomMove")){
                         kType = args[i];
                     }
                 }
@@ -221,7 +224,7 @@ public class ShapeSearch extends Canvas {
         System.out.println("First fit used an area of " + xBest.getScore());
 
         // Variable Neighbourhood Descent
-        xBest = VND(xBest, shapes.length - 1);
+        xBest = VND(xBest, shapes.length);
 
         //-------------------------------------------------------------------------------------
         //finish timing program
