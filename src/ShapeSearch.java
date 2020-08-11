@@ -141,25 +141,54 @@ public class ShapeSearch extends Canvas {
         return xBest;
     }
 
-
-    private static Solution VND(Solution xBest, int kMax){
+    /**
+     * Variable Neighbourhood Descent
+     * Check all neighbourhoods and return best solution
+     *
+     * @param x the current  solution
+     * @param kMax teh max k neighbour to search up to
+     * @return best solution in neighbourhoods
+     */
+    private static Solution VND(Solution x, int kMax){
         k = 1;
         do{
             // Find the best neighbor in neighborhood k
-            Solution xNew = xBest.getBestInNeighborhood(k, kType);
+            Solution xNew = x.getBestInNeighborhood(k, kType);
             // Change neighborhood
-            xBest = NeighbourhoodChange(xBest, xNew);
+            x = NeighbourhoodChange(x, xNew);
         } while (k < kMax);
-        return xBest;
+        return x;
+    }
+
+    /**
+     * Reduced Variable Neighbourhood Search
+     * Repeatedly iterates over neighbourhoods, picking a single random solution from each neighbourhood, until a fixed amount of time expires
+     *
+     * @param x the current solution
+     * @param kMax the max neighbourhoods to test
+     * @param tMax the max amount of time to search for the best solution
+     * @return the best solution found
+     */
+    private static Solution RVNS(Solution x, int kMax, long tMax){
+        long t;
+        // Add current time to max time so we have the end time when the given max time has passed
+        tMax += System.nanoTime();
+        do{
+            k = 1;
+            do{
+                Solution xShook = x.Shake(k, kType);
+                x = NeighbourhoodChange(x, xShook);
+            } while (k < kMax);
+            // Save current CPU time into t
+            t = System.nanoTime();
+        } while (t < tMax);
+        return x;
     }
 
     public static void main(String[] args) {
 
-        //start timing program
-        final long initialTime = System.nanoTime();
-        //-----------------------------------------------------------------------------
-
         // The default values that are used if arguments are not given
+        int seconds = 1;
         int columnNumber = 1;
         String filePath = "ShapeLists/GivenLists.csv";
         boolean limitToTen = false;
@@ -180,6 +209,13 @@ public class ShapeSearch extends Canvas {
                     else if(args[i].equals("RandomMove")){
                         kType = args[i];
                     }
+                    else if (args[i].equals("t-") && i + 1 < args.length){
+                        try {
+                            seconds = Integer.parseInt(args[i + 1]);
+                        } catch(Exception e){
+                            System.out.println("To set the time limit for RVNS add the argument 't-' followed by the numebr of seconds in the next argument");
+                        }
+                    }
                 }
             }
         }
@@ -193,19 +229,52 @@ public class ShapeSearch extends Canvas {
         Solution xBest = new Solution(shapes, boxWidth);
         System.out.println("First fit used an area of " + xBest.getScore());
 
+
+        //-----------------------------------------------------------------------------------VND start
+        //start timing program
+        long initialTime = System.nanoTime();
+
         // Variable Neighbourhood Descent
         xBest = VND(xBest, shapes.length);
 
-        //-------------------------------------------------------------------------------------
         //finish timing program
         long finalTime = System.nanoTime();
+        //-------------------------------------------------------------------------------------VND end
+
         //Please do not remove or change the format of this output message
         System.out.println("Processed " + shapes.length + " shapes in " + (finalTime - initialTime) / 1E9 + " secs.");
 
         // Report how much space was used to fit all the shapes
+        printSummary(xBest, "VND: " + filePath + " " + columnNumber + " " + kType);
 
+        //---------------------------------------------------------------------------------------RVNS start
+        // Second search method to compare against
+        Solution xBestSecond = new Solution(shapes, boxWidth);
+        System.out.println("First fit used an area of " + xBestSecond.getScore());
 
-        printSummary(xBest, filePath + " " + columnNumber + " " + kType);
+        //start timing program
+        initialTime = System.nanoTime();
+
+        // Reduced Variable Neighbourhood Search
+        xBestSecond = RVNS(xBestSecond, shapes.length, (long) (1E9 * seconds));
+
+        //finish timing program
+        finalTime = System.nanoTime();
+        //---------------------------------------------------------------------------------------RVNS end
+
+        //Please do not remove or change the format of this output message
+        System.out.println("Processed " + shapes.length + " shapes in " + (finalTime - initialTime) / 1E9 + " secs.");
+
+        // Report how much space was used to fit all the shapes
+        printSummary(xBestSecond, "RVNS: " + filePath + " " + columnNumber + " " + kType);
+
+        if(xBestSecond.getScore() < xBest.getScore()){
+            xBest = xBestSecond;
+            System.out.println("RVNS best found solution being drawn");
+        }
+        else{
+            System.out.println("VND best found solution being drawn");
+        }
 
         // Set up the graphical display
         new GraphicalDisplay(boxWidth, xBest.getScore() + 5, xBest.getDrawDimensions());

@@ -4,7 +4,6 @@ public class DrawingDimensions {
     int x;
     int y;
     Shape shape;
-    boolean rotate;
 
     public DrawingDimensions(int X, int Y, Shape shape){
         x = X;

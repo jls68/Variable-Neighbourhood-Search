@@ -37,7 +37,7 @@ public class Solution {
      * @param type of change the neighbour index refers to
      * @return a random solution in k neighbourhood
      */
-    public Solution shake(int k, String type){
+    public Solution Shake(int k, String type){
         // Pick a random index of a shape in the solution
         int i = rand.nextInt(_shapesOrder.length);
         // Use that random index to get a shape order of kth neighbourhood
