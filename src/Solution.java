@@ -30,6 +30,13 @@ public class Solution {
         return toBeDrawn;
     }
 
+    /**
+     * Pick random solution from kth neighbourhood around x
+     *
+     * @param k the neighbour index
+     * @param type of change the neighbour index refers to
+     * @return a random solution in k neighbourhood
+     */
     public Solution shake(int k, String type){
         // Pick a random index of a shape in the solution
         int i = rand.nextInt(_shapesOrder.length);
@@ -40,28 +47,23 @@ public class Solution {
 
     /**
      * Finds the best solution in the neighbourhood
+     *
      * @param k the neighbour index
      * @param type of change the neighbour index refers to
      * @return the best solution out of the neighbours
      */
     public Solution getBestInNeighborhood(int k, String type) {
-        // Create an array of neighborhood solutions
-        Solution[] neighborhood;
+        Solution xNew, xBest = null;
 
         // Create neighbours of solution that have k difference
         int length = _shapesOrder.length;
-        neighborhood = new Solution[length];
         for (int i = 0; i < length; i++) {
             Shape[] newOrder = getNeighbour(i, k, type);
             // Add the new solution
-            neighborhood[i] = new Solution(newOrder, _boxWidth);
-        }
+            xNew = new Solution(newOrder, _boxWidth);
 
-        // Find best neighbourhood solution
-        Solution xBest = neighborhood[0];
-        for (int i = 1; i < neighborhood.length; i++) {
-            if (neighborhood[i].getScore() < xBest.score) {
-                xBest = neighborhood[i];
+            if (xBest == null || xNew.getScore() < xBest.getScore()) {
+                xBest = xNew;
             }
         }
 
@@ -175,8 +177,7 @@ public class Solution {
         DrawingDimensions[] toBeDrawn = new DrawingDimensions[shapesOrder.length];
 
         // Create a list of the shapes to be added so they can be removed from the list as they get added
-        List<Shape> toAdd = new ArrayList<>();
-        toAdd.addAll(Arrays.asList(shapesOrder));
+        List<Shape> toAdd = new ArrayList<>(Arrays.asList(shapesOrder));
 
         // Until all shapes are added
         while (0 < toAdd.size()) {
@@ -191,19 +192,6 @@ public class Solution {
                     while (x < _boxWidth && x >= 0 && yOld == yBottomLine[x]) {
                         x++;
                     }
-
-                    /*if(passes == 3) { // Else if set then attempt to fit a shape in the lowest y level
-                        int xNew = x;
-                        // Find x coordinate of the first lowest y value on the bottom line
-                        for (int i = x; i < _boxWidth && i >= 0; i += direction) {
-                            // If the current y value at i is less than the y value at the new x coordinate
-                            if (yBottomLine[i] < yBottomLine[xNew]) {
-                                // Then make i the new x value
-                                xNew = i;
-                            }
-                        }
-                        x = xNew;
-                    }*/
                 }
                 // Next if statement should still happen if the above if statement occurs as the x could move out of bounds
 
@@ -226,31 +214,8 @@ public class Solution {
                     widthToFitIn++;
                 }
 
-                // If width does not fit but height does then rotate
-                /*
-                if (width > widthToFitIn && height <= widthToFitIn) {
-                    width = height;
-                    height = toAdd.get(i).getWidth();
-                }
-                 */
-
                 // If the shape can fit
                 if (width <= widthToFitIn) {
-
-                    /*
-                    // Search a first perfect width fit out of the remaining
-                        int counter = 0;
-                        while (width != widthToFitIn && i + counter < toAdd.size()){
-                            // If the width of a later shape matches the widthToFitIn then have that as the current shape
-                            if(toAdd.get(i + counter).getWidth() == widthToFitIn){
-                                i += counter;
-                            } else {
-                                counter++;
-                            }
-                        }
-
-                     */
-
 
                     // Add the shape
                     toBeDrawn[toBeDrawnIndex] = new DrawingDimensions(x, yBottomLine[x], toAdd.get(i));
