@@ -120,12 +120,6 @@ public class ShapeSearch extends Canvas {
             System.out.print(s.getId() + " ");
         }
         System.out.println();
-        // Print out fitting option settings
-        System.out.print("Fitting option settings are: ");
-        for (Boolean opt: x._options) {
-            System.out.print(opt.toString() + " ");
-        }
-        System.out.println();
         System.out.println("Used space = " + x.getScore() * boxWidth);
     }
 
@@ -152,18 +146,7 @@ public class ShapeSearch extends Canvas {
         k = 1;
         do{
             // Find the best neighbor in neighborhood k
-            Solution xNew;
-            if(kType.equals("OptionsAndKMove")){
-                xNew = xBest.getBestInNeighborhood(k, "kMove");
-                xNew = xNew.getBestInNeighborhood(k, "Options");
-            }
-            else if(kType.equals("OptionsAndRandomMove")){
-                xNew = xBest.getBestInNeighborhood(k, "RandomMove");
-                xNew = xNew.getBestInNeighborhood(k, "Options");
-            }
-            else {
-                xNew = xBest.getBestInNeighborhood(k, kType);
-            }
+            Solution xNew = xBest.getBestInNeighborhood(k, kType);
             // Change neighborhood
             xBest = NeighbourhoodChange(xBest, xNew);
         } while (k < kMax);
@@ -194,10 +177,7 @@ public class ShapeSearch extends Canvas {
                     if (args[i].equals("limit")) {
                         limitToTen = true;
                     }
-                    else if(args[i].equals("RandomMove") ||
-                            args[i].equals("Options") ||
-                            args[i].equals("OptionsAndKMove") ||
-                            args[i].equals("OptionsAndRandomMove")){
+                    else if(args[i].equals("RandomMove")){
                         kType = args[i];
                     }
                 }
@@ -209,18 +189,8 @@ public class ShapeSearch extends Canvas {
         // Sort the array of shapes from largest area first to smallest area last
         Arrays.sort(shapes, Collections.reverseOrder());
 
-        //printShapeOrder(shapes, "Initial Order");
-
-        // Initialise fitting options for the initial solution as all false
-        boolean[] options = new boolean[OPTIONS];
-        // This seem to be the optimal settings
-        options[1] = true;
-        options[2] = true;
-        options[3] = true;
-        //options[4] = true; // This option doesn't seem to have much affect
-
         // Create initial solution with order to add shapes, the shapes, the options to fit, and the box width
-        Solution xBest = new Solution(shapes, options, boxWidth);
+        Solution xBest = new Solution(shapes, boxWidth);
         System.out.println("First fit used an area of " + xBest.getScore());
 
         // Variable Neighbourhood Descent
