@@ -21,7 +21,7 @@ public class DrawingDimensions {
 
         // Fill inner colour
         g.setColor(Color.CYAN);
-        //g.fillRect(X, Y, W, H);
+        g.fillRect(X, Y, W, H);
 
         // Draw outline
         g.setColor(Color.BLACK);
