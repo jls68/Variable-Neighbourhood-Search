@@ -12,10 +12,8 @@ import javax.swing.*;
 
 public class ShapeSearch extends Canvas {
 
-    static final int OPTIONS = 6;
     static int boxWidth;
     static int k;
-    static String kType;
 
     /**
      * Reads the shapes in from a csv file
@@ -120,7 +118,7 @@ public class ShapeSearch extends Canvas {
             System.out.print(s.getId() + " ");
         }
         System.out.println();
-        System.out.println("Used space = " + x.getScore() * boxWidth);
+        System.out.println("Used space = " + (x.getScore() * boxWidth));
     }
 
     /**
@@ -153,7 +151,7 @@ public class ShapeSearch extends Canvas {
         k = 1;
         do{
             // Find the best neighbor in neighborhood k
-            Solution xNew = x.getBestInNeighborhood(k, kType);
+            Solution xNew = x.getBestInNeighborhood(k);
             // Change neighborhood
             x = NeighbourhoodChange(x, xNew);
         } while (k < kMax);
@@ -176,7 +174,7 @@ public class ShapeSearch extends Canvas {
         do{
             k = 1;
             do{
-                Solution xShook = x.Shake(k, kType);
+                Solution xShook = x.Shake(k);
                 x = NeighbourhoodChange(x, xShook);
             } while (k < kMax);
             // Save current CPU time minus initial start time into t for the elapsed time
@@ -193,7 +191,7 @@ public class ShapeSearch extends Canvas {
         int columnNumber = 1;
         String filePath = "ShapeLists/GivenLists.csv";
         boolean limitToTen = false;
-        kType = "";
+        int kMax;
 
         // Allow other shape lists to be selected
         if (args.length >= 2) {
@@ -206,9 +204,6 @@ public class ShapeSearch extends Canvas {
                 for (int i = 2; i < args.length; i++) {
                     if (args[i].equals("limit")) {
                         limitToTen = true;
-                    }
-                    else if(args[i].equals("RandomMove")){
-                        kType = args[i];
                     }
                     else if (args[i].equals("t-") && i + 1 < args.length){
                         try {
@@ -230,6 +225,9 @@ public class ShapeSearch extends Canvas {
 
         Shape[] shapes = readCSV(filePath, columnNumber, limitToTen); //set to limit input to 10 shapes maximum
 
+        // kMax equals the number of shapes times the number of different changes that could be made
+        kMax = shapes.length * 3;
+
         // Sort the array of shapes from largest area first to smallest area last
         Arrays.sort(shapes, Collections.reverseOrder());
 
@@ -243,7 +241,7 @@ public class ShapeSearch extends Canvas {
         long initialTime = System.nanoTime();
 
         // Variable Neighbourhood Descent
-        xBest = VND(xBest, shapes.length);
+        xBest = VND(xBest, kMax);
 
         //finish timing program
         long finalTime = System.nanoTime();
@@ -253,18 +251,18 @@ public class ShapeSearch extends Canvas {
         System.out.println("Processed " + shapes.length + " shapes in " + (finalTime - initialTime) / 1E9 + " secs.");
 
         // Report how much space was used to fit all the shapes
-        printSummary(xBest, "VND: " + filePath + " " + columnNumber + " " + kType);
+        printSummary(xBest, "VND: " + filePath + " " + columnNumber);
 
         //---------------------------------------------------------------------------------------RVNS start
         // Second search method to compare against
         Solution xBestSecond = new Solution(shapes, boxWidth, seed);
-        System.out.println("First fit used an area of " + xBestSecond.getScore());
+        System.out.println("First fit used a height of " + xBestSecond.getScore());
 
         //start timing program
         initialTime = System.nanoTime();
 
         // Reduced Variable Neighbourhood Search
-        xBestSecond = RVNS(xBestSecond, shapes.length, (long) (1E9 * seconds));
+        xBestSecond = RVNS(xBestSecond, kMax, (long) (1E9 * seconds));
 
         //finish timing program
         finalTime = System.nanoTime();
@@ -274,14 +272,14 @@ public class ShapeSearch extends Canvas {
         System.out.println("Processed " + shapes.length + " shapes in " + (finalTime - initialTime) / 1E9 + " secs.");
 
         // Report how much space was used to fit all the shapes
-        printSummary(xBestSecond, "RVNS: " + filePath + " " + columnNumber + " " + kType);
+        printSummary(xBestSecond, "RVNS: " + filePath + " " + columnNumber);
 
         if(xBestSecond.getScore() < xBest.getScore()){
             xBest = xBestSecond;
             System.out.println("RVNS best found solution being drawn");
         }
         else{
-            System.out.println("VND best found solution being drawn");
+            System.out.println("VND best found solution being drawn with an area of " + xBest.getScore() * boxWidth);
         }
 
         // Set up the graphical display

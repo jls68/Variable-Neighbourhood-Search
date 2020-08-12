@@ -37,14 +37,13 @@ public class Solution {
      * Pick random solution from kth neighbourhood around x
      *
      * @param k the neighbour index
-     * @param type of change the neighbour index refers to
      * @return a random solution in k neighbourhood
      */
-    public Solution Shake(int k, String type){
+    public Solution Shake(int k){
         // Pick a random index of a shape in the solution
         int i = rand.nextInt(_shapesOrder.length);
         // Use that random index to get a shape order of kth neighbourhood
-        Shape[] neighbourShapes = getNeighbour(i, k, type);
+        Shape[] neighbourShapes = getNeighbour(i, k);
         return new Solution(neighbourShapes, _boxWidth, _seed);
     }
 
@@ -52,16 +51,15 @@ public class Solution {
      * Finds the best solution in the neighbourhood
      *
      * @param k the neighbour index
-     * @param type of change the neighbour index refers to
      * @return the best solution out of the neighbours
      */
-    public Solution getBestInNeighborhood(int k, String type) {
+    public Solution getBestInNeighborhood(int k) {
         Solution xNew, xBest = null;
 
         // Create neighbours of solution that have k difference
         int length = _shapesOrder.length;
         for (int i = 0; i < length; i++) {
-            Shape[] newOrder = getNeighbour(i, k, type);
+            Shape[] newOrder = getNeighbour(i, k);
             // Add the new solution
             xNew = new Solution(newOrder, _boxWidth, _seed);
 
@@ -78,25 +76,62 @@ public class Solution {
      *
      * @param i index of the shape to be moved
      * @param k amount of positions to move up
-     * @param type of change k neighbour index refers to
      * @return a new array of shapes
      */
-    private Shape[] getNeighbour(int i, int k, String type){
-        // Decrement k by one as we first try rotating each shape before moving them
-        k--;
+    private Shape[] getNeighbour(int i, int k) {
+        // After k iterates through each shape do a different neighbourhood change
 
-        if(k == 0){
-            // Rotate shape at i
-            return rotateShape(i, _shapesOrder);
+        // Attempt to rotate k number of shapes from i up
+        if (k <= _shapesOrder.length) {
+            Shape[] newOrder = _shapesOrder.clone();
+            for(int j = 0; j < k; j++) {
+                // Calculate next shape's index
+                int index = i + j;
+                if(index >= newOrder.length){
+                    index -= newOrder.length;
+                }
+                // Rotate shape at index
+                newOrder = rotateShape(index, newOrder);
+            }
+            return newOrder;
         }
-        else if (type.equals("RandomMove")) {
-            // K shapes moved at random
-            return moveKShapes(i, k);
-        }
-        else {
+
+        // Done the first neighbourhood change
+        k -= _shapesOrder.length;
+
+        if (k < _shapesOrder.length) {
             // Push shape at i, k positions up the queue
             return moveShapeByK(i, k, _shapesOrder);
         }
+
+        // Done the first neighbourhood change
+        k -= _shapesOrder.length;
+        // K shapes moved and rotated at random
+        return moveKShapes(i, k);
+
+    }
+
+    /**
+     * Rotate the shape at index i if possible
+     * @param i index of the shape to rotate
+     * @return a new list of shapes
+     */
+    private Shape[] rotateShape(int i, Shape[] shapesOrder){
+
+        // Copy current shapes
+        Shape[] newShapes = shapesOrder.clone();
+
+        int newWidth = newShapes[i].getHeight();
+        // If the rotated shape would not fit on the sheet then do not rotate it
+        if(newWidth > _boxWidth){
+            return newShapes;
+        }
+
+        int newHeight = newShapes[i].getWidth();
+
+        // Create a copy of the old shape at i but with swapped dimensions
+        newShapes[i] = new Shape(newShapes[i].getId(), newWidth, newHeight);
+        return newShapes;
     }
 
     /**
@@ -132,41 +167,24 @@ public class Solution {
     }
 
     /**
-     * Move an amount of shapes to random positions of the queue
+     * Move and rotate an amount of shapes to random positions of the queue
      * @param i index of first shape to move
      * @param k amount of shapes to move
-     * @return a new order of shapes
+     * @return a new configuration of shapes
      */
     private Shape[] moveKShapes(int i, int k){
 
-        Shape[] newOrder = moveShapeByK(i, rand.nextInt(_shapesOrder.length - 2) + 1, _shapesOrder);
+        Shape[] newOrder = _shapesOrder.clone();
         for(int j = 0; j < k; j++){
-            newOrder = moveShapeByK(i, rand.nextInt(newOrder.length - 2) + 1, newOrder);
+            // Rotate each shape at random
+            if(rand.nextBoolean()){
+                newOrder = rotateShape(i, newOrder);
+            }
+            // Get random movement amount
+            int move = rand.nextInt(newOrder.length - 1) + 1;
+            newOrder = moveShapeByK(i, move, newOrder);
         }
         return newOrder;
-    }
-
-    /**
-     * Rotate the shape at index i if possible
-     * @param i index of the shape to rotate
-     * @return a new list of shapes
-     */
-    private Shape[] rotateShape(int i, Shape[] shapesOrder){
-
-        // Copy current shapes
-        Shape[] newShapes = shapesOrder.clone();
-
-        int newWidth = newShapes[i].getHeight();
-        // If the rotated shape would not fit on the sheet then do not rotate it
-        if(newWidth > _boxWidth){
-            return newShapes;
-        }
-
-        int newHeight = newShapes[i].getWidth();
-
-        // Create a copy of the old shape at i but with swapped dimensions
-        newShapes[i] = new Shape(newShapes[i].getId(), newWidth, newHeight);
-        return newShapes;
     }
 
     /**
@@ -272,7 +290,7 @@ public class Solution {
                     toBeDrawnIndex++;
                     // Adjust yBottomLine
                     for (int whereShapePlaced = bestX; whereShapePlaced < bestX + width; whereShapePlaced++) {
-                        yBottomLine[whereShapePlaced] = lowestMaxY;
+                        yBottomLine[whereShapePlaced] = lowestMaxY + height;
                     }
 
                     // Adjust x
