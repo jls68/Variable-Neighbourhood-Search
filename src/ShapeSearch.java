@@ -171,16 +171,16 @@ public class ShapeSearch extends Canvas {
      */
     private static Solution RVNS(Solution x, int kMax, long tMax){
         long t;
-        // Add current time to max time so we have the end time when the given max time has passed
-        tMax += System.nanoTime();
+        // Get current time to help measure how long the RVNS runs for.
+        long tStart = System.nanoTime();
         do{
             k = 1;
             do{
                 Solution xShook = x.Shake(k, kType);
                 x = NeighbourhoodChange(x, xShook);
             } while (k < kMax);
-            // Save current CPU time into t
-            t = System.nanoTime();
+            // Save current CPU time minus initial start time into t for the elapsed time
+            t = System.nanoTime() - tStart;
         } while (t < tMax);
         return x;
     }

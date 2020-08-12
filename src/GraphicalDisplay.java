@@ -22,9 +22,16 @@ public class GraphicalDisplay extends JFrame {
 
     // Constructor to set up the GUI components and event handlers
     public GraphicalDisplay(int boxWidth, int boxHeight, DrawingDimensions[] toBeDrawn) {
+        // Adjust Enlargement
+        if(boxWidth < 100){
+            ENLARGEMENT = 10;
+        }
+
         canvas = new DrawCanvas();    // Construct the drawing canvas
         canvas.setPreferredSize(new Dimension((boxWidth) * ENLARGEMENT, boxHeight * ENLARGEMENT));
         this.toBeDrawn = toBeDrawn;
+
+
 
         // Set the Drawing JPanel as the JFrame's content-pane
         Container cp = getContentPane();
