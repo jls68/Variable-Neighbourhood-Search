@@ -5,16 +5,19 @@ import java.util.Random;
 
 public class Solution {
 
-    Random rand = new Random();
+    Random rand;
     int[] yBottomLine; // Record the y values along the top of all added shapes
     DrawingDimensions[] toBeDrawn;
     Shape[] _shapesOrder;
     int _boxWidth;
+    int _seed;
     int score;
 
-    public Solution(Shape[] shapesOrder, int boxWidth){
+    public Solution(Shape[] shapesOrder, int boxWidth, int seed){
         _shapesOrder = shapesOrder;
         _boxWidth = boxWidth;
+        _seed = seed;
+        rand = new Random(_seed);
 
         yBottomLine = new int[_boxWidth];
         toBeDrawn = fitShape(_shapesOrder);
@@ -42,7 +45,7 @@ public class Solution {
         int i = rand.nextInt(_shapesOrder.length);
         // Use that random index to get a shape order of kth neighbourhood
         Shape[] neighbourShapes = getNeighbour(i, k, type);
-        return new Solution(neighbourShapes, _boxWidth);
+        return new Solution(neighbourShapes, _boxWidth, _seed);
     }
 
     /**
@@ -60,7 +63,7 @@ public class Solution {
         for (int i = 0; i < length; i++) {
             Shape[] newOrder = getNeighbour(i, k, type);
             // Add the new solution
-            xNew = new Solution(newOrder, _boxWidth);
+            xNew = new Solution(newOrder, _boxWidth, _seed);
 
             if (xBest == null || xNew.getScore() < xBest.getScore()) {
                 xBest = xNew;

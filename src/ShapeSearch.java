@@ -189,6 +189,7 @@ public class ShapeSearch extends Canvas {
 
         // The default values that are used if arguments are not given
         int seconds = 1;
+        int seed = 0;
         int columnNumber = 1;
         String filePath = "ShapeLists/GivenLists.csv";
         boolean limitToTen = false;
@@ -213,7 +214,14 @@ public class ShapeSearch extends Canvas {
                         try {
                             seconds = Integer.parseInt(args[i + 1]);
                         } catch(Exception e){
-                            System.out.println("To set the time limit for RVNS add the argument 't-' followed by the numebr of seconds in the next argument");
+                            System.out.println("To set the time limit for RVNS add the argument 't-' followed by the number of seconds in the next argument");
+                        }
+                    }
+                    else if (args[i].equals("S-") && i + 1 < args.length){
+                        try {
+                            seed = Integer.parseInt(args[i + 1]);
+                        } catch(Exception e){
+                            System.out.println("To set the random seed for random move add the argument 'S-' followed by the seed number in the next argument");
                         }
                     }
                 }
@@ -226,7 +234,7 @@ public class ShapeSearch extends Canvas {
         Arrays.sort(shapes, Collections.reverseOrder());
 
         // Create initial solution with order to add shapes, the shapes, the options to fit, and the box width
-        Solution xBest = new Solution(shapes, boxWidth);
+        Solution xBest = new Solution(shapes, boxWidth, seed);
         System.out.println("First fit used an area of " + xBest.getScore());
 
 
@@ -249,7 +257,7 @@ public class ShapeSearch extends Canvas {
 
         //---------------------------------------------------------------------------------------RVNS start
         // Second search method to compare against
-        Solution xBestSecond = new Solution(shapes, boxWidth);
+        Solution xBestSecond = new Solution(shapes, boxWidth, seed);
         System.out.println("First fit used an area of " + xBestSecond.getScore());
 
         //start timing program
