@@ -1,7 +1,4 @@
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 public class Solution {
 
@@ -12,6 +9,7 @@ public class Solution {
     private int _boxWidth;
     private int _seed;
     private int score;
+    private final double moveTypes = 3;
 
     public Solution(Shape[] shapesOrder, int boxWidth, int seed){
         _shapesOrder = shapesOrder;
@@ -57,7 +55,7 @@ public class Solution {
      * @param k the neighbour index
      * @return the same solution or the first improvement in the neighbours
      */
-    public Solution FirstImprovemnt(int k) {
+    public Solution FirstImprovment(int k) {
         Solution xNew;
 
         // Create neighbours of solution that have k difference
@@ -110,11 +108,11 @@ public class Solution {
      */
     private Shape[] getNeighbour(int i, int k) {
         // After k iterates through each shape do a different neighbourhood change
-
+        int kLocal = (int)(Math.ceil(k / moveTypes));
         // Attempt to rotate k number of shapes from i up
-        if (k <= _shapesOrder.length) {
+        if (k % moveTypes == 1 && kLocal <= _shapesOrder.length) {
             Shape[] newOrder = _shapesOrder.clone();
-            for(int j = 0; j < k; j++) {
+            for(int j = 0; j < kLocal; j++) {
                 // Calculate next shape's index
                 int index = i + j;
                 if(index >= newOrder.length){
@@ -124,20 +122,13 @@ public class Solution {
                 newOrder = rotateShape(index, newOrder);
             }
             return newOrder;
-        }
-
-        // Done the first neighbourhood change
-        k -= _shapesOrder.length;
-
-        if (k < _shapesOrder.length) {
+        }else if (k % moveTypes == 2 && kLocal < _shapesOrder.length) {
             // Push shape at i, k positions up the queue
-            return moveShapeByK(i, k, _shapesOrder);
+            return moveShapeByK(i, kLocal, _shapesOrder);
+        } else {
+            // K shapes moved and rotated at random
+            return moveKShapes(i, kLocal);
         }
-
-        // Done the first neighbourhood change
-        k -= _shapesOrder.length;
-        // K shapes moved and rotated at random
-        return moveKShapes(i, k);
 
     }
 
@@ -175,25 +166,15 @@ public class Solution {
         // If the new position is less than 0
         if(newPosition < 0) {
             // Then add to end of queue
-            newPosition = shapesOrder.length + newPosition;
+            newPosition += (shapesOrder.length - 1);
         }
         // Create the new shape array
-        Shape[] newOrder = new Shape[shapesOrder.length];
-        int toAddIndex = 0;
-        for(int j = 0; j < shapesOrder.length; j++){
-            // If we reach the shape to skip
-            if(j == i){
-                toAddIndex++;
-            }
 
-            if(j == newPosition){
-                newOrder[j] = _shapesOrder[i];
-            } else{
-                newOrder[j] = _shapesOrder[toAddIndex];
-                toAddIndex++;
-            }
-        }
-        return newOrder;
+        List<Shape> orderList = new LinkedList<>(Arrays.asList(shapesOrder));
+        orderList.remove(i);
+        orderList.add(newPosition, shapesOrder[i]);
+
+        return orderList.toArray(new Shape[shapesOrder.length]);
     }
 
     /**
