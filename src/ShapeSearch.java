@@ -114,7 +114,7 @@ public class ShapeSearch extends Canvas {
         System.out.println(Message);
         // Print out the order of shapes
         System.out.print("Shape order to add: ");
-        for (Shape s: x._shapesOrder) {
+        for (Shape s: x.getOrder()) {
             System.out.print(s.getId() + " ");
         }
         System.out.println();
@@ -128,7 +128,7 @@ public class ShapeSearch extends Canvas {
      * @return the best of the two solutions
      */
     private static Solution NeighbourhoodChange(Solution xBest, Solution xNew){
-        if(xNew.score < xBest.score){
+        if(xNew.getScore() < xBest.getScore()){
             xBest = xNew;
             System.out.println("New fit at k=" + k + " with an area of " + xBest.getScore());
             k = 1;
@@ -177,6 +177,127 @@ public class ShapeSearch extends Canvas {
                 Solution xShook = x.Shake(k);
                 x = NeighbourhoodChange(x, xShook);
             } while (k < kMax);
+            // Save current CPU time minus initial start time into t for the elapsed time
+            t = System.nanoTime() - tStart;
+        } while (t < tMax);
+        return x;
+    }
+
+    /**
+     * Basic Variable Neighbourhood Search
+     * @param x the current solution
+     * @param kMax the max neighbourhoods to test
+     * @param tMax the max amount of time to search for the best solution
+     * @return
+     */
+    private static Solution BVNS(Solution x, int kMax, long tMax){
+        long t;
+        // Get current time to help measure how long the RVNS runs for.
+        long tStart = System.nanoTime();
+        do{
+            k = 1;
+            do{
+                Solution xShook = x.Shake(k);                   // Shaking
+                Solution xFirst = xShook.FirstImprovemnt(k);   // Local Search
+                x = NeighbourhoodChange(x, xFirst);            // Change neighborhood
+            } while (k < kMax);
+            // Save current CPU time minus initial start time into t for the elapsed time
+            t = System.nanoTime() - tStart;
+        } while (t < tMax);
+        return x;
+    }
+
+    /**
+     * General Variable Neighbourhood Search
+     * @param x the current solution
+     * @param lMax the local max neighbourhoods to test in the VND
+     * @param kMax the max neighbourhoods to test
+     * @param tMax the max amount of time to search for the best solution
+     * @return
+     */
+    private static Solution GVNS(Solution x, int lMax, int kMax, long tMax){
+        long t;
+        // Get current time to help measure how long the RVNS runs for.
+        long tStart = System.nanoTime();
+        do{
+            k = 1;
+            do{
+                Solution xShook = x.Shake(k);      // Shaking
+                int storedK = k;
+                Solution xVND = VND(x, lMax);      // VND
+                k = storedK;
+                x = NeighbourhoodChange(x, xVND);  // Change neighborhood
+            } while (k < kMax);
+            // Save current CPU time minus initial start time into t for the elapsed time
+            t = System.nanoTime() - tStart;
+        } while (t < tMax);
+        return x;
+    }
+
+    /**
+     * Skewed Variable Neighbourhood Search
+     *
+     * @param xBest the current best solution
+     * @param xNew the next solution to move to
+     * @param alpha
+     * @return the best of the two solutions
+     */
+    private static Solution NeighbourhoodChangeS(Solution xBest, Solution xNew, double alpha){
+        if(xNew.getScore() - alpha * p(xBest, xNew) < xBest.getScore()){
+            xBest = xNew;
+            System.out.println("Skewed fit at k=" + k + " with an area of " + xBest.getScore());
+            k = 1;
+        }
+        else{
+            k++;
+        }
+        return xBest;
+    }
+
+    /**
+     * Measure the distance between solutions.
+     * @param x1 a solution
+     * @param x2 a different solution
+     * @return
+     */
+    private static int p(Solution x1, Solution x2){
+        // Find the distance between the two solutions
+        int distance = 0;
+        Shape[] s1 = x1.getOrder();
+        Shape[] s2 = x2.getOrder();
+        // Increase the distance for each different shape
+        for (int i = 0; i < s1.length; i++) {
+            if(!s1[i].equals(s2[i])){
+                distance++;
+            }
+        }
+        return distance;
+    }
+
+    /**
+     * Skewed Variable Neighbourhood Search
+     * @param x the current solution
+     * @param kMax the max neighbourhoods to test
+     * @param tMax the max amount of time to search for the best solution
+     * @param alpha
+     * @return
+     */
+    private static Solution SVNS(Solution x, int kMax, long tMax, double alpha){
+        long t;
+        // Get current time to help measure how long the RVNS runs for.
+        long tStart = System.nanoTime();
+        Solution xBest = x;
+        do{
+            k = 1;
+            do{
+                Solution xShook = x.Shake(k);
+                Solution xFirst = xShook.FirstImprovemnt(k);
+                x = NeighbourhoodChangeS(x, xFirst, alpha);
+                if(x.getScore() < xBest.getScore()){
+                    xBest = x;
+                }
+            } while(k < kMax);
+            x = xBest;
             // Save current CPU time minus initial start time into t for the elapsed time
             t = System.nanoTime() - tStart;
         } while (t < tMax);

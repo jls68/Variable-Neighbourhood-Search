@@ -5,13 +5,13 @@ import java.util.Random;
 
 public class Solution {
 
-    Random rand;
-    int[] yBottomLine; // Record the y values along the top of all added shapes
-    DrawingDimensions[] toBeDrawn;
-    Shape[] _shapesOrder;
-    int _boxWidth;
-    int _seed;
-    int score;
+    private Random rand;
+    private int[] yBottomLine; // Record the y values along the top of all added shapes
+    private DrawingDimensions[] toBeDrawn;
+    private Shape[] _shapesOrder;
+    private int _boxWidth;
+    private int _seed;
+    private int score;
 
     public Solution(Shape[] shapesOrder, int boxWidth, int seed){
         _shapesOrder = shapesOrder;
@@ -27,6 +27,10 @@ public class Solution {
 
     public int getScore() {
         return score;
+    }
+
+    public Shape[] getOrder(){
+        return _shapesOrder;
     }
 
     public DrawingDimensions[] getDrawDimensions() {
@@ -45,6 +49,32 @@ public class Solution {
         // Use that random index to get a shape order of kth neighbourhood
         Shape[] neighbourShapes = getNeighbour(i, k);
         return new Solution(neighbourShapes, _boxWidth, _seed);
+    }
+
+    /**
+     * Finds the first solution that improves in the neighbourhood
+     *
+     * @param k the neighbour index
+     * @return the same solution or the first improvement in the neighbours
+     */
+    public Solution FirstImprovemnt(int k) {
+        Solution xNew;
+
+        // Create neighbours of solution that have k difference
+        int length = _shapesOrder.length;
+        for (int i = 0; i < length; i++) {
+            Shape[] newOrder = getNeighbour(i, k);
+            // Add the new solution
+            xNew = new Solution(newOrder, _boxWidth, _seed);
+
+            // If the new solution is better then return it
+            if (xNew.getScore() < this.getScore()) {
+                return xNew;
+            }
+        }
+
+        // With no better solution found return the same solution
+        return this;
     }
 
     /**
