@@ -9,6 +9,7 @@ public class Solution {
     private int _boxWidth;
     private int _seed;
     private int score;
+    private int firstImprovementCost;
     private final double moveTypes = 3;
 
     public Solution(Shape[] shapesOrder, int boxWidth, int seed){
@@ -25,6 +26,14 @@ public class Solution {
 
     public int getScore() {
         return score;
+    }
+
+    /**
+     * Gives the amount of neighbourhoods searched before first improvement returned a result
+     * @return the cost from the most recent firstimprovement
+     */
+    public int getFirstImprovementCost() {
+        return firstImprovementCost;
     }
 
     public Shape[] getOrder(){
@@ -57,7 +66,6 @@ public class Solution {
      */
     public Solution FirstImprovment(int k) {
         Solution xNew;
-
         // Create neighbours of solution that have k difference
         int length = _shapesOrder.length;
         for (int i = 0; i < length; i++) {
@@ -67,10 +75,12 @@ public class Solution {
 
             // If the new solution is better then return it
             if (xNew.getScore() < this.getScore()) {
+                firstImprovementCost = i + 1;
                 return xNew;
             }
         }
 
+        firstImprovementCost = length;
         // With no better solution found return the same solution
         return this;
     }

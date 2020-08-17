@@ -15,6 +15,7 @@ public class ShapeSearch extends Canvas {
     static boolean debug = false;
     static int boxWidth;
     static int k;
+    static int cost;
     enum Method {
         VND,
         RVNS,
@@ -118,16 +119,33 @@ public class ShapeSearch extends Canvas {
      * @param x the solution to print details about.
      * @param Message to be displayed above the list of shapes.
      */
-    private static void printSummary(Solution x, String Message){
+    private static void printSummary(Solution[] x, long[] runLengths, int[] runCosts, int i, String Message){
         if(debug) {
             // Print out the order of shapes
             System.out.print("Shape order to add: ");
-            for (Shape s : x.getOrder()) {
+            for (Shape s : x[i].getOrder()) {
                 System.out.print(s.getId() + " ");
             }
             System.out.println();
         }
-        System.out.println(Message + " found the least area of " + (x.getScore() * boxWidth));
+
+        int aveCost = runCosts[0];
+        int lowC = 0;
+        // Find the average and lowest of cost
+        for (int j = 1; j < runCosts.length; j++){
+            aveCost += runCosts[j];
+            if(runCosts[j] < runCosts[lowC]){
+                lowC = j;
+            }
+        }
+        aveCost /= runCosts.length;
+
+        // Report the best result
+        System.out.println(Message + " found the least area of " + (x[i].getScore() * boxWidth + " after searching " + runCosts[i] + " solutions over " + runLengths[i] / 1E9 + " seconds."));
+
+        // Report average and lowest cost
+        System.out.println("The average cost was " + aveCost + " with the lowest cost being " + runCosts[lowC] + " from run " + (lowC + 1));
+
         System.out.println();
     }
 
@@ -162,6 +180,8 @@ public class ShapeSearch extends Canvas {
     private static Solution VND(Solution x, int kMax){
         k = 1;
         do{
+            // Add to cost the length whenever we search the entire neighbourhood
+            cost += x.getOrder().length;
             // Find the best neighbor in neighborhood k
             Solution xNew = x.getBestInNeighborhood(k);
             // Change neighborhood
@@ -186,6 +206,8 @@ public class ShapeSearch extends Canvas {
         do{
             k = 1;
             do{
+                // Add one to cost whenever we find a random neighbourhood
+                cost++;
                 Solution xShook = x.Shake(k);
                 x = NeighbourhoodChange(x, xShook);
             } while (k < kMax);
@@ -209,8 +231,12 @@ public class ShapeSearch extends Canvas {
         do{
             k = 1;
             do{
+                // Add one to cost whenever we find a random neighbourhood
+                cost++;
                 Solution xShook = x.Shake(k);                   // Shaking
                 Solution xFirst = xShook.FirstImprovment(k);   // Local Search
+                // Add to cost whenever we find the neighbourhood with improvement
+                cost += xShook.getFirstImprovementCost();
                 x = NeighbourhoodChange(x, xFirst);            // Change neighborhood
             } while (k < kMax);
             // Save current CPU time minus initial start time into t for the elapsed time
@@ -234,6 +260,8 @@ public class ShapeSearch extends Canvas {
         do{
             k = 1;
             do{
+                // Add one to cost whenever we find a random neighbourhood
+                cost++;
                 Solution xShook = x.Shake(k);      // Shaking
                 int storedK = k;
                 Solution xVND = VND(x, lMax);      // VND
@@ -305,11 +333,15 @@ public class ShapeSearch extends Canvas {
         do{
             k = 1;
             do{
+                // Add one to cost whenever we find a random neighbourhood
+                cost++;
                 Solution xShook = x.Shake(k);
                 if(xShook.getScore() < 65){
                     System.out.print("");
                 }
                 Solution xFirst = xShook.FirstImprovment(k);
+                // Add to cost whenever we find the neighbourhood with improvement
+                cost += xShook.getFirstImprovementCost();
                 x = NeighbourhoodChangeS(x, xFirst, alpha);
                 if(x.getScore() < xBest.getScore()){
                     xBest = x;
@@ -323,43 +355,71 @@ public class ShapeSearch extends Canvas {
     }
 
 
-    private static Solution runMethod(Method method, int kMax, int tMax, int lMax, double alpha, Shape[] shapes, int seed, String fileInfo){
-        //start timing program
-        long initialTime = System.nanoTime();
+    private static Solution runMethod(Method method, int kMax, int tMax, int lMax, double alpha, Shape[] shapes, int seed, String fileInfo, int runs){
 
-        // Create initial solution with order to add shapes, the shapes, the options to fit, and the box width
-        Solution x = new Solution(shapes, boxWidth, seed);
-        if(debug) {
-            System.out.println("First fit used an area of " + x.getScore());
+        long[] runLengths = new long[runs];
+        int[] runCosts = new int[runs];
+        Solution[] x = new Solution[runs];
+        int bestIndex = 0;
+
+        // Repeat test with a different seed for each run
+        for(int i = 0; i < runs; i++){
+            // Change the seed value
+            seed += 1000;
+
+            //start timing program
+            long initialTime = System.nanoTime();
+
+            // Create initial solution with order to add shapes, the shapes, the options to fit, and the box width
+            x[i] = new Solution(shapes, boxWidth, seed);
+            if (debug) {
+                System.out.println("First fit used an area of " + x[i].getScore());
+            }
+            // Start cost at one as we have created the initial solution
+            cost = 1;
+
+            if (method == Method.VND) {
+                // Variable Neighbourhood Descent
+                x[i] = VND(x[i], kMax);
+            } else if (method == Method.RVNS) {
+                // Reduced Variable Neighbourhood Search
+                x[i] = RVNS(x[i], kMax, tMax);
+            } else if (method == Method.BVNS) {
+                // Basic Variable Neighbourhood Search
+                x[i] = BVNS(x[i], kMax, tMax);
+            } else if (method == Method.GVNS) {
+                // General Variable Neighbourhood Search
+                x[i] = GVNS(x[i], lMax, kMax, tMax);
+            } else if (method == Method.SVNS) {
+                // Reduced Variable Neighbourhood Search
+                x[i] = SVNS(x[i], lMax, tMax, alpha);
+            }
+
+            //finish timing program
+            long finalTime = System.nanoTime();
+
+            // Keep track of best solution
+            if(x[i].getScore() < x[bestIndex].getScore()){
+                bestIndex = i;
+            }
+            else if(x[i].getScore() == x[bestIndex].getScore()){
+                if(runCosts[i] < runCosts[bestIndex]){
+                    bestIndex = i;
+                }
+            }
+
+            runLengths[i] = finalTime - initialTime;
+            runCosts[i] = cost;
+
+            System.out.println("Run " + (i + 1) + " of " + method + " least area = " + x[i].getScore());
+            //Please do not remove or change the format of this output message
+            System.out.println("Processed " + x[i].getOrder().length + " shapes in " + (runLengths[i]) / 1E9  + " secs.");
         }
-
-        if(method == Method.VND) {
-            // Variable Neighbourhood Descent
-            x = VND(x, kMax);
-        } else if(method == Method.RVNS){
-            // Reduced Variable Neighbourhood Search
-            x = RVNS(x, kMax, tMax);
-        } else if(method == Method.BVNS){
-            // Basic Variable Neighbourhood Search
-            x = BVNS(x, kMax, tMax);
-        } else if(method == Method.GVNS){
-            // General Variable Neighbourhood Search
-            x = GVNS(x, lMax, kMax, tMax);
-        } else if(method == Method.SVNS){
-            // Reduced Variable Neighbourhood Search
-            x = SVNS(x, lMax, tMax, alpha);
-        }
-
-        //finish timing program
-        long finalTime = System.nanoTime();
-
-        //Please do not remove or change the format of this output message
-        System.out.println("Processed " + shapes.length + " shapes in " + (finalTime - initialTime) / 1E9 + " secs.");
 
         // Report how much space was used to fit all the shapes
-        printSummary(x, method.toString() + ": " + fileInfo);
+        printSummary(x, runLengths, runCosts, bestIndex, method.toString() + ": " + fileInfo);
 
-        return x;
+        return x[bestIndex];
     }
 
     public static void main(String[] args) {
@@ -372,6 +432,7 @@ public class ShapeSearch extends Canvas {
         int columnNumber = 1;
         String filePath = "ShapeLists/GivenLists.csv";
         boolean limitToTen = false;
+        Method thisMethod = null;
 
         // Allow other shape lists to be selected
         if (args.length >= 2) {
@@ -385,14 +446,14 @@ public class ShapeSearch extends Canvas {
                     if (args[i].equals("limit")) {
                         limitToTen = true;
                     }
-                    else if (args[i].equals("t-") && i + 1 < args.length){
+                    else if (args[i].equals("-t") && i + 1 < args.length){
                         try {
                             tMax = Integer.parseInt(args[i + 1]);
                         } catch(Exception e){
                             System.out.println("To set the time limit for RVNS add the argument 't-' followed by the number of seconds in the next argument");
                         }
                     }
-                    else if (args[i].equals("S-") && i + 1 < args.length){
+                    else if (args[i].equals("-S") && i + 1 < args.length){
                         try {
                             seed = Integer.parseInt(args[i + 1]);
                         } catch(Exception e){
@@ -400,6 +461,12 @@ public class ShapeSearch extends Canvas {
                         }
                     } else if (args[i].equals("debug")){
                         debug = true;
+                    } else {
+                        for (Method m: Method.values()) {
+                            if(args[i].equals(m.toString())){
+                                thisMethod = m;
+                            }
+                        }
                     }
                 }
             }
@@ -420,13 +487,20 @@ public class ShapeSearch extends Canvas {
         Solution x = null;
         String bestMethod = "";
 
-        // Try each different type of search method
-        for (Method m :Method.values()) {
-            Solution xNew = runMethod(m, kMax, tMax, lMax, alpha, shapes, seed, fileInfo);
-            if(x == null || xNew.getScore() < x.getScore()){
-                x = xNew;
-                bestMethod = m.toString();
+        if(thisMethod == null) {
+
+            // Try each different type of search method
+            for (Method m : Method.values()) {
+                Solution xNew = runMethod(m, kMax, tMax, lMax, alpha, shapes, seed, fileInfo, 10);
+                if (x == null || xNew.getScore() < x.getScore()) {
+                    x = xNew;
+                    bestMethod = m.toString();
+                }
             }
+        }
+        else{
+            x = runMethod(thisMethod, kMax, tMax, lMax, alpha, shapes, seed, fileInfo, 10);
+            bestMethod = thisMethod.toString();
         }
         
         // State best solution
