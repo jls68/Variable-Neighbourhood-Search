@@ -129,13 +129,19 @@ public class ShapeSearch extends Canvas {
             System.out.println();
         }
 
+        long aveTime =runLengths[0];
+        int lowT = 0;
         int aveCost = runCosts[0];
         int lowC = 0;
         // Find the average and lowest of cost
         for (int j = 1; j < runCosts.length; j++){
+            aveTime += runLengths[j];
             aveCost += runCosts[j];
             if(runCosts[j] < runCosts[lowC]){
                 lowC = j;
+            }
+            if(runLengths[j] < runLengths[lowT]){
+                lowT = j;
             }
         }
         aveCost /= runCosts.length;
@@ -145,6 +151,9 @@ public class ShapeSearch extends Canvas {
 
         // Report average and lowest cost
         System.out.println("The average cost was " + aveCost + " with the lowest cost being " + runCosts[lowC] + " from run " + (lowC + 1));
+
+        // Report average and lowest run length
+        System.out.println("The average run length was " + aveTime + " with the lowest run length being " + runLengths[lowT] + " from run " + (lowT + 1));
 
         System.out.println();
     }
