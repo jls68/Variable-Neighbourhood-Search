@@ -144,6 +144,7 @@ public class ShapeSearch extends Canvas {
                 lowT = j;
             }
         }
+        aveTime /= runLengths.length;
         aveCost /= runCosts.length;
 
         // Report the best result
@@ -420,7 +421,7 @@ public class ShapeSearch extends Canvas {
             runLengths[i] = finalTime - initialTime;
             runCosts[i] = cost;
 
-            System.out.println("Run " + (i + 1) + " of " + method + " least area = " + x[i].getScore());
+            System.out.println("Run " + (i + 1) + " of " + method + " least area = " + x[i].getScore() + " after testing " + runCosts[i] + " Solutions");
             //Please do not remove or change the format of this output message
             System.out.println("Processed " + x[i].getOrder().length + " shapes in " + (runLengths[i]) / 1E9  + " secs.");
         }
