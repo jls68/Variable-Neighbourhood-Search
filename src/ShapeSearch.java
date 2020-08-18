@@ -153,7 +153,7 @@ public class ShapeSearch extends Canvas {
         System.out.println("The average cost was " + aveCost + " with the lowest cost being " + runCosts[lowC] + " from run " + (lowC + 1));
 
         // Report average and lowest run length
-        System.out.println("The average run length was " + aveTime + " with the lowest run length being " + runLengths[lowT] + " from run " + (lowT + 1));
+        System.out.println("The average run length was " + aveTime / 1E9 + " with the lowest run length being " + runLengths[lowT] / 1E9 + " from run " + (lowT + 1));
 
         System.out.println();
     }
