@@ -365,7 +365,7 @@ public class ShapeSearch extends Canvas {
     }
 
 
-    private static Solution runMethod(Method method, int kMax, int tMax, int lMax, double alpha, Shape[] shapes, int seed, String fileInfo, int runs){
+    private static Solution runMethod(Method method, int kMax, long tMax, int lMax, double alpha, Shape[] shapes, int seed, String fileInfo, int runs){
 
         long[] runLengths = new long[runs];
         int[] runCosts = new int[runs];
@@ -402,7 +402,7 @@ public class ShapeSearch extends Canvas {
                 x[i] = GVNS(x[i], lMax, kMax, tMax);
             } else if (method == Method.SVNS) {
                 // Reduced Variable Neighbourhood Search
-                x[i] = SVNS(x[i], lMax, tMax, alpha);
+                x[i] = SVNS(x[i], kMax, tMax, alpha);
             }
 
             //finish timing program
@@ -434,10 +434,11 @@ public class ShapeSearch extends Canvas {
 
     public static void main(String[] args) {
 
-        int kMax, lMax;
+        int kMax = -1;
+        int lMax = -1;
         // The default values that are used if arguments are not given
-        int tMax = 1;
-        double alpha = 0.1;
+        long tMax = 1;
+        double alpha = 0.01;
         int seed = 4563;
         int columnNumber = 1;
         String filePath = "ShapeLists/GivenLists.csv";
@@ -458,17 +459,38 @@ public class ShapeSearch extends Canvas {
                     }
                     else if (args[i].equals("-t") && i + 1 < args.length){
                         try {
-                            tMax = Integer.parseInt(args[i + 1]);
+                            tMax = Long.parseLong(args[i + 1]);
                         } catch(Exception e){
-                            System.out.println("To set the time limit for RVNS add the argument 't-' followed by the number of seconds in the next argument");
+                            System.out.println("To set the time limit of search algorithims add the argument '-t' followed by the number of seconds in the next argument");
                         }
                     }
                     else if (args[i].equals("-S") && i + 1 < args.length){
                         try {
                             seed = Integer.parseInt(args[i + 1]);
                         } catch(Exception e){
-                            System.out.println("To set the random seed for random move add the argument 'S-' followed by the seed number in the next argument");
+                            System.out.println("To set the random seed for random move add the argument '-S' followed by the seed number in the next argument");
                         }
+                    }
+                    else if (args[i].equals("-a") && i + 1 < args.length){
+                        try {
+                            alpha = Double.parseDouble(args[i + 1]);
+                        } catch(Exception e){
+                            System.out.println("To set the alpha value for SVNS add the argument '-a' followed by the alpha number in the next argument");
+                        }
+                    }
+                    else if (args[i].equals("-k") && i + 1 < args.length) {
+                        try {
+                            kMax = Integer.parseInt(args[i + 1]);
+                        } catch (Exception e) {
+                            System.out.println("To set the mad k value add the argument '-k' followed by the max k number in the next argument");
+                        }
+                    }
+                    else if (args[i].equals("-l") && i + 1 < args.length){
+                            try {
+                                lMax = Integer.parseInt(args[i + 1]);
+                            } catch(Exception e){
+                                System.out.println("To set the local max k for GVNS add the argument '-l' followed by the max local k number in the next argument");
+                            }
                     } else if (args[i].equals("debug")){
                         debug = true;
                     } else {
@@ -485,9 +507,13 @@ public class ShapeSearch extends Canvas {
 
         Shape[] shapes = readCSV(filePath, columnNumber, limitToTen); //set to limit input to 10 shapes maximum
 
-        // kMax equals the number of shapes times the number of different changes that could be made
-        kMax = shapes.length * 3;
-        lMax = shapes.length / 10;
+        if(kMax == -1) {
+            // kMax equals the number of shapes times the number of different changes that could be made
+            kMax = shapes.length * 3;
+        }
+        if(lMax == -1) {
+            lMax = shapes.length / 10;
+        }
         // Convert tMax from seconds to nanoseconds
         tMax *= 1E9;
 
