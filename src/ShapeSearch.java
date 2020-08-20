@@ -346,9 +346,6 @@ public class ShapeSearch extends Canvas {
                 // Add one to cost whenever we find a random neighbourhood
                 cost++;
                 Solution xShook = x.Shake(k);
-                if(xShook.getScore() < 65){
-                    System.out.print("");
-                }
                 Solution xFirst = xShook.FirstImprovment(k);
                 // Add to cost whenever we find the neighbourhood with improvement
                 cost += xShook.getFirstImprovementCost();
@@ -364,7 +361,19 @@ public class ShapeSearch extends Canvas {
         return x;
     }
 
-
+    /**
+     * Runs each searching method
+     * @param method
+     * @param kMax
+     * @param tMax
+     * @param lMax
+     * @param alpha
+     * @param shapes
+     * @param seed
+     * @param fileInfo
+     * @param runs
+     * @return
+     */
     private static Solution runMethod(Method method, int kMax, double tMax, int lMax, double alpha, Shape[] shapes, int seed, String fileInfo, int runs){
 
         double[] runLengths = new double[runs];
