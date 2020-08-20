@@ -119,7 +119,7 @@ public class ShapeSearch extends Canvas {
      * @param x the solution to print details about.
      * @param Message to be displayed above the list of shapes.
      */
-    private static void printSummary(Solution[] x, long[] runLengths, int[] runCosts, int i, String Message){
+    private static void printSummary(Solution[] x, double[] runLengths, int[] runCosts, int i, String Message){
         if(debug) {
             // Print out the order of shapes
             System.out.print("Shape order to add: ");
@@ -129,7 +129,7 @@ public class ShapeSearch extends Canvas {
             System.out.println();
         }
 
-        long aveTime =runLengths[0];
+        double aveTime =runLengths[0];
         int lowT = 0;
         int aveCost = runCosts[0];
         int lowC = 0;
@@ -209,10 +209,10 @@ public class ShapeSearch extends Canvas {
      * @param tMax the max amount of time to search for the best solution
      * @return the best solution found
      */
-    private static Solution RVNS(Solution x, int kMax, long tMax){
-        long t;
+    private static Solution RVNS(Solution x, int kMax, double tMax){
+        double t;
         // Get current time to help measure how long the RVNS runs for.
-        long tStart = System.nanoTime();
+        double tStart = System.nanoTime();
         do{
             k = 1;
             do{
@@ -234,10 +234,10 @@ public class ShapeSearch extends Canvas {
      * @param tMax the max amount of time to search for the best solution
      * @return the best solution found
      */
-    private static Solution BVNS(Solution x, int kMax, long tMax){
-        long t;
+    private static Solution BVNS(Solution x, int kMax, double tMax){
+        double t;
         // Get current time to help measure how long the RVNS runs for.
-        long tStart = System.nanoTime();
+        double tStart = System.nanoTime();
         do{
             k = 1;
             do{
@@ -263,10 +263,10 @@ public class ShapeSearch extends Canvas {
      * @param tMax the max amount of time to search for the best solution
      * @return the best solution found
      */
-    private static Solution GVNS(Solution x, int lMax, int kMax, long tMax){
-        long t;
+    private static Solution GVNS(Solution x, int lMax, int kMax, double tMax){
+        double t;
         // Get current time to help measure how long the RVNS runs for.
-        long tStart = System.nanoTime();
+        double tStart = System.nanoTime();
         do{
             k = 1;
             do{
@@ -335,10 +335,10 @@ public class ShapeSearch extends Canvas {
      * @param alpha the multiplier to take a distant solution
      * @return the best solution
      */
-    private static Solution SVNS(Solution x, int kMax, long tMax, double alpha){
-        long t;
+    private static Solution SVNS(Solution x, int kMax, double tMax, double alpha){
+        double t;
         // Get current time to help measure how long the RVNS runs for.
-        long tStart = System.nanoTime();
+        double tStart = System.nanoTime();
         Solution xBest = x;
         do{
             k = 1;
@@ -365,9 +365,9 @@ public class ShapeSearch extends Canvas {
     }
 
 
-    private static Solution runMethod(Method method, int kMax, long tMax, int lMax, double alpha, Shape[] shapes, int seed, String fileInfo, int runs){
+    private static Solution runMethod(Method method, int kMax, double tMax, int lMax, double alpha, Shape[] shapes, int seed, String fileInfo, int runs){
 
-        long[] runLengths = new long[runs];
+        double[] runLengths = new double[runs];
         int[] runCosts = new int[runs];
         Solution[] x = new Solution[runs];
         int bestIndex = 0;
@@ -378,7 +378,7 @@ public class ShapeSearch extends Canvas {
             seed += 1000;
 
             //start timing program
-            long initialTime = System.nanoTime();
+            double initialTime = System.nanoTime();
 
             // Create initial solution with order to add shapes, the shapes, the options to fit, and the box width
             x[i] = new Solution(shapes, boxWidth, seed);
@@ -406,7 +406,7 @@ public class ShapeSearch extends Canvas {
             }
 
             //finish timing program
-            long finalTime = System.nanoTime();
+            double finalTime = System.nanoTime();
 
             // Keep track of best solution
             if(x[i].getScore() < x[bestIndex].getScore()){
@@ -437,7 +437,7 @@ public class ShapeSearch extends Canvas {
         int kMax = -1;
         int lMax = -1;
         // The default values that are used if arguments are not given
-        long tMax = 1;
+        double tMax = 1;
         double alpha = 0.01;
         int seed = 4563;
         int columnNumber = 1;
@@ -459,7 +459,7 @@ public class ShapeSearch extends Canvas {
                     }
                     else if (args[i].equals("-t") && i + 1 < args.length){
                         try {
-                            tMax = Long.parseLong(args[i + 1]);
+                            tMax = Double.parseDouble(args[i + 1]);
                         } catch(Exception e){
                             System.out.println("To set the time limit of search algorithims add the argument '-t' followed by the number of seconds in the next argument");
                         }
