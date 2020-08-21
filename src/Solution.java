@@ -2,6 +2,8 @@ import java.util.*;
 
 public class Solution {
 
+    //James_Sheaf-Morrison_1314151_Meleena_Radcliffe_1319196
+
     private Random rand;
     private int[] yBottomLine; // Record the y values along the top of all added shapes
     private DrawingDimensions[] toBeDrawn;
