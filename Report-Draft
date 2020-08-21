@@ -1,4 +1,0 @@
-
-Naive method:
-
-The initial method starts with ordering the list of shapes from largest to smallest, then uses first improvement local search, 
